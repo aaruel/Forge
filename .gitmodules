@@ -1,0 +1,28 @@
+[submodule "Forge/Vendor/assimp"]
+    path = Forge/Vendor/assimp
+    url = https://github.com/assimp/assimp.git
+    branch = master
+[submodule "Forge/Vendor/glad"]
+    path = Forge/Vendor/glad
+    url = https://github.com/Dav1dde/glad.git
+    branch = c
+[submodule "Forge/Vendor/glfw"]
+    path = Forge/Vendor/glfw
+    url = https://github.com/glfw/glfw.git
+    branch = master
+[submodule "Forge/Vendor/glm"]
+    path = Forge/Vendor/glm
+    url = https://github.com/g-truc/glm.git
+    branch = master
+[submodule "Forge/Vendor/stb"]
+    path = Forge/Vendor/stb
+    url = https://github.com/nothings/stb.git
+    branch = master
+[submodule "Forge/Vendor/bullet"]
+    path = Forge/Vendor/bullet
+    url = https://github.com/bulletphysics/bullet3.git
+    branch = master
+[submodule "Forge/Vendor/polyvox"]
+    path = Forge/Vendor/polyvox
+    url = https://bitbucket.org/volumesoffun/polyvox.git
+    branch = develop

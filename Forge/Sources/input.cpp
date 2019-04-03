@@ -1,0 +1,91 @@
+//
+//  input.cpp
+//  Glitter
+//
+//  Created by Aaron Ruel on 3/28/19.
+//
+
+#include "input.hpp"
+#include "glitter.hpp"
+
+// Global variables because callback typing!
+Input::MousePos mousepos;
+Input::MouseBut mousebut;
+bool newPos = false;
+
+Input * Input::instance = 0;
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    // prevent mouse jumping
+    if(mousepos.firstMouse) {
+        mousepos.offsX = 0.0f;
+        mousepos.offsY = 0.0f;
+        mousepos.firstMouse = false;
+    }
+    else {
+        mousepos.offsX = xpos;
+        mousepos.offsY = -ypos;
+    }
+    glfwSetCursorPos(window, 0.0f, 0.0f);
+    newPos = true;
+}
+
+void mouse_button_callback(
+    __attribute__((unused)) GLFWwindow* window,
+    int button,
+    int action,
+    __attribute__((unused)) int mods
+) {
+    if (action == GLFW_PRESS) {
+        switch (button) {
+            case GLFW_MOUSE_BUTTON_LEFT:
+                mousebut.leftClick = true;
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+Input * Input::getInstance() {
+    if (instance == 0) {
+        instance = new Input(GlobalSingleton::getInstance()->getWindow());
+    }
+    return instance;
+}
+
+Input::Input(GLFWwindow* _window) : window(_window) {
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(_window, mouse_callback);
+    // Lock cursor to window
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+// Mouse
+
+Input::MousePos Input::getMousePos() {
+    return mousepos;
+}
+
+bool Input::isNewPos() {
+    return newPos;
+}
+
+void Input::resetPosBool() {
+    newPos = false;
+}
+
+// Keys
+
+bool Input::isKeyPressed(int key) {
+    return glfwGetKey(window, key) == GLFW_PRESS;
+}
+
+// Mouse Buttons
+
+bool Input::isLeftClick() {
+    bool poll = mousebut.leftClick;
+    // preemptively reset
+    mousebut.leftClick = false;
+    return poll;
+}
