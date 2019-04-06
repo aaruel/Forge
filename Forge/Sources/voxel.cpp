@@ -7,6 +7,13 @@
 
 #include "voxel.hpp"
 
+#define BENCHMARK(code) \
+auto __start = std::chrono::high_resolution_clock::now(); \
+code \
+auto __end = std::chrono::high_resolution_clock::now(); \
+auto __result = std::chrono::duration_cast<std::chrono::duration<double>>(__end - __start); \
+std::cout << "BENCH: " << __result.count() << std::endl;
+
 using namespace PolyVox;
 
 namespace XK {
@@ -52,26 +59,49 @@ namespace XK {
         }
         
         // Try to raycast for block updates
-        if (Input::getInstance()->isLeftClick()) {
+        Input * input = Input::getInstance();
+        if (input->isLeftClick()) {
             Vector3DInt32 newVox;
             if (!getVoxelFromEye(newVox)) return;
             addVoxel(newVox);
         }
+        
+        if (input->isRightClick()) {
+            Vector3DInt32 newVox;
+            if (!getVoxelFromEye(newVox, false)) return;
+            deleteVoxel(newVox);
+        }
+        
+        // rendering after a voxel modification thread completes
+        if (mesherReady()) {
+            (*mesherPayload)();
+            delete mesherPayload;
+            expectMesher = false;
+        }
     }
     
     void Voxel::addVoxel(Vector3DInt32 position) {
-        // Clean up previous GPU array data
-        glDeleteVertexArrays(1, &mData.vertexArrayObject);
-        
         // Modify volume
         volumes->setVoxel(
             position.getX(),
             position.getY(),
             position.getZ(),
-            MaterialDensityPair88(1, 1)
+            MaterialDensityPair88(1, MaterialDensityPair88::getMaxDensity()) // note here
         );
         
-        makeRenderable();
+        makeRenderable(true);
+    }
+    
+    void Voxel::deleteVoxel(Vector3DInt32 position) {
+        // Modify volume
+        volumes->setVoxel(
+            position.getX(),
+            position.getY(),
+            position.getZ(),
+            MaterialDensityPair88(0, MaterialDensityPair88::getMinDensity()) // note here
+        );
+        
+        makeRenderable(true);
     }
     
     ////////////////////////
@@ -89,11 +119,12 @@ namespace XK {
             if (sampler.isCurrentPositionValid() && current != mInvalidVoxel) {
                 mValid = true;
                 // Stop iterating after finding valid voxel
+                location = sampler.getPosition();
                 return false;
             }
             
             // Save the previous block! Nice trick to write an adjacent block
-            location = sampler.getPosition();
+            prevLocation = sampler.getPosition();
             
             // We are in the volume, so decide whether to continue based on the voxel value.
             return true;
@@ -101,10 +132,11 @@ namespace XK {
         
         MaterialDensityPair88 mInvalidVoxel = MaterialDensityPair88(0, 0);
         bool mValid;
+        Vector3DInt32 prevLocation;
         Vector3DInt32 location;
     };
     
-    bool Voxel::getVoxelFromEye(Vector3DInt32 & result) {
+    bool Voxel::getVoxelFromEye(Vector3DInt32 & result, bool adjacent) {
         glm::vec3 position = mCamera->getPosition();
         // The eye is normalized, extended by 100
         glm::vec3 eye = mCamera->getEye() * 100.0f;
@@ -115,8 +147,8 @@ namespace XK {
         // Raycast
         raycastWithDirection(volumes, vp, ve, raycastCallback);
         
-        result = Vector3DInt32(raycastCallback.location);
-        
+        if (adjacent) result = Vector3DInt32(raycastCallback.prevLocation);
+        else result = Vector3DInt32(raycastCallback.location);
         // Get block to modify
         return raycastCallback.mValid;
     }
@@ -129,11 +161,25 @@ namespace XK {
     /// Private ///
     ///////////////
     
-    void Voxel::makeRenderable() {
-        // Generate renderable
-        auto mesh = extractCubicMesh(volumes, volumes->getEnclosingRegion());
-        auto decoMesh = decodeMesh(mesh);
-        addMesh(decoMesh);
+    void Voxel::makeRenderable(bool updating) {
+        expectMesher = true;
+        mesherFuture = std::async([this, &updating](){
+            // slow as heck
+            // Generate renderable
+            auto mesh = extractMarchingCubesMesh(volumes, volumes->getEnclosingRegion());
+            // Decode
+            auto decoMesh = decodeMesh(mesh);
+            if (updating) {
+                mesherPayload = new std::function<void()>(
+                    [this, decoMesh](){updateMesh(decoMesh);}
+                );
+            }
+            else {
+                mesherPayload = new std::function<void()>(
+                    [this, decoMesh](){addMesh(decoMesh);}
+                );
+            }
+        });
     }
     
     void Voxel::createSphereInVolume(RawVolume<MaterialDensityPair88>& volData, float fRadius, uint8_t uValue) {
@@ -169,6 +215,68 @@ namespace XK {
     }
     
     template<typename MeshType>
+    void Voxel::updateMesh(const MeshType& surfaceMesh) {
+        // Init
+        GLuint vSize = surfaceMesh.getNoOfVertices();
+        GLuint iSize = surfaceMesh.getNoOfIndices();
+    
+        // Activate VAO
+        glBindVertexArray(mData.vertexArrayObject);
+    
+        // Update the vertices buffer
+        glBindBuffer(GL_ARRAY_BUFFER, mData.vertexBuffer);
+        // If the current mesh is bigger, generate a bigger buffer
+        if (vSize > mData.vBufferSize) {
+            // new buffer with larger size
+            glBufferData(
+                GL_ARRAY_BUFFER,
+                vSize * sizeof(typename MeshType::VertexType),
+                surfaceMesh.getRawVertexData(),
+                GL_STATIC_DRAW
+            );
+        
+            mData.vBufferSize = vSize;
+        }
+        else {
+            // Modifying existing buffer
+            glBufferSubData(
+                GL_ARRAY_BUFFER,
+                0,
+                vSize * sizeof(typename MeshType::VertexType),
+                surfaceMesh.getRawVertexData()
+            );
+        }
+        
+        // Update the indices buffer
+        glBindBuffer(GL_ARRAY_BUFFER, mData.indexBuffer);
+        // Do the same for the indices buffer
+        if (iSize > mData.iBufferSize) {
+            glBufferData(
+                GL_ELEMENT_ARRAY_BUFFER,
+                surfaceMesh.getNoOfIndices() * sizeof(typename MeshType::IndexType),
+                surfaceMesh.getRawIndexData(),
+                GL_DYNAMIC_DRAW
+            );
+            
+            mData.iBufferSize = iSize;
+        }
+        else {
+            glBufferSubData(
+                GL_ELEMENT_ARRAY_BUFFER,
+                0,
+                iSize * sizeof(typename MeshType::IndexType),
+                surfaceMesh.getRawIndexData()
+            );
+        }
+        
+        // Cleanup
+        glBindVertexArray(0);
+        
+        // Mark amount of indices to draw when rendering
+        mData.noOfIndices = surfaceMesh.getNoOfIndices();
+    }
+    
+    template<typename MeshType>
     void Voxel::addMesh(
         const MeshType& surfaceMesh,
         const PolyVox::Vector3DInt32& translation,
@@ -183,14 +291,16 @@ namespace XK {
         glBindVertexArray(meshData.vertexArrayObject);
 
         // The GL_ARRAY_BUFFER will contain the list of vertex positions
+        // AoS organized (pos, normal, data)[]
+        // Double the size for sub-buffer updating
         glGenBuffers(1, &(meshData.vertexBuffer));
         glBindBuffer(GL_ARRAY_BUFFER, meshData.vertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, surfaceMesh.getNoOfVertices() * sizeof(typename MeshType::VertexType), surfaceMesh.getRawVertexData(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, surfaceMesh.getNoOfVertices() * sizeof(typename MeshType::VertexType), surfaceMesh.getRawVertexData(), GL_DYNAMIC_DRAW);
 
         // and GL_ELEMENT_ARRAY_BUFFER will contain the indices
         glGenBuffers(1, &(meshData.indexBuffer));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshData.indexBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, surfaceMesh.getNoOfIndices() * sizeof(typename MeshType::IndexType), surfaceMesh.getRawIndexData(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, surfaceMesh.getNoOfIndices() * sizeof(typename MeshType::IndexType), surfaceMesh.getRawIndexData(), GL_DYNAMIC_DRAW);
 
         // Every surface extractor outputs valid positions for the vertices, so tell OpenGL how these are laid out
         glEnableVertexAttribArray(0); // Attrib '0' is the vertex positions
@@ -212,11 +322,13 @@ namespace XK {
         // We're done uploading and can now unbind and delete the buffers.
         // As long as VBOs are referenced in the VAO, nothing bad happens.
         glBindVertexArray(0);
-        glDeleteBuffers(1, &meshData.vertexBuffer);
-        glDeleteBuffers(1, &meshData.indexBuffer);
+//        glDeleteBuffers(1, &meshData.vertexBuffer);
+//        glDeleteBuffers(1, &meshData.indexBuffer);
 
         // A few additional properties can be copied across for use during rendering.
         meshData.noOfIndices = surfaceMesh.getNoOfIndices();
+        meshData.vBufferSize = surfaceMesh.getNoOfVertices();
+        meshData.iBufferSize = meshData.noOfIndices;
         meshData.translation = glm::vec3(translation.getX(), translation.getY(), translation.getZ());
         meshData.scale = scale;
 

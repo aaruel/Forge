@@ -22,6 +22,7 @@ public:
     
     struct MouseBut {
         bool leftClick;
+        bool rightClick;
     };
     
     // Mouse
@@ -34,6 +35,7 @@ public:
     
     // Mouse Buttons
     bool isLeftClick();
+    bool isRightClick();
     
     static Input * getInstance();
     

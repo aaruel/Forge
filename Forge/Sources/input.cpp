@@ -41,6 +41,9 @@ void mouse_button_callback(
             case GLFW_MOUSE_BUTTON_LEFT:
                 mousebut.leftClick = true;
                 break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                mousebut.rightClick = true;
+                break;
             default:
                 break;
         }
@@ -81,11 +84,17 @@ bool Input::isKeyPressed(int key) {
     return glfwGetKey(window, key) == GLFW_PRESS;
 }
 
-// Mouse Buttons
+// Mouse Buttons (there's a better way of doing this)
 
 bool Input::isLeftClick() {
     bool poll = mousebut.leftClick;
     // preemptively reset
     mousebut.leftClick = false;
+    return poll;
+}
+
+bool Input::isRightClick() {
+    bool poll = mousebut.rightClick;
+    mousebut.rightClick = false;
     return poll;
 }
