@@ -7,11 +7,17 @@
 
 #include "input.hpp"
 #include "glitter.hpp"
+#include <map>
+#include <vector>
 
 // Global variables because callback typing!
 Input::MousePos mousepos;
 Input::MouseBut mousebut;
 bool newPos = false;
+std::map<
+    int,
+    std::vector<std::function<void()>>
+> keyEmitter;
 
 Input * Input::instance = 0;
 
@@ -30,12 +36,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     newPos = true;
 }
 
-void mouse_button_callback(
-    __attribute__((unused)) GLFWwindow* window,
-    int button,
-    int action,
-    __attribute__((unused)) int mods
-) {
+void mouse_button_callback(GLFWwindow*, int button, int action, int) {
     if (action == GLFW_PRESS) {
         switch (button) {
             case GLFW_MOUSE_BUTTON_LEFT:
@@ -50,6 +51,16 @@ void mouse_button_callback(
     }
 }
 
+void key_callback(GLFWwindow *, int key, int, int action, int) {
+    if (action != GLFW_PRESS) return;
+    // Executed any hooked event callbacks
+    if (keyEmitter.count(key)) {
+        for (auto & function : keyEmitter[key]) {
+            function();
+        }
+    }
+}
+
 Input * Input::getInstance() {
     if (instance == 0) {
         instance = new Input(GlobalSingleton::getInstance()->getWindow());
@@ -58,8 +69,9 @@ Input * Input::getInstance() {
 }
 
 Input::Input(GLFWwindow* _window) : window(_window) {
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetMouseButtonCallback(_window, mouse_button_callback);
     glfwSetCursorPosCallback(_window, mouse_callback);
+    glfwSetKeyCallback(_window, key_callback);
     // Lock cursor to window
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
@@ -82,6 +94,10 @@ void Input::resetPosBool() {
 
 bool Input::isKeyPressed(int key) {
     return glfwGetKey(window, key) == GLFW_PRESS;
+}
+
+void Input::registerKeyEvent(int key, std::function<void()> function) {
+    keyEmitter[key].push_back(function);
 }
 
 // Mouse Buttons (there's a better way of doing this)

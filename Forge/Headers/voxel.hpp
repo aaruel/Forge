@@ -16,6 +16,7 @@
 #include <PolyVox/MarchingCubesSurfaceExtractor.h>
 #include <PolyVox/Mesh.h>
 #include <PolyVox/RawVolume.h>
+#include <PolyVox/PagedVolume.h>
 #include <PolyVox/MaterialDensityPair.h>
 #include <PolyVox/Raycast.h>
 #include <glad/glad.h>
@@ -59,6 +60,9 @@ namespace XK {
         void addVoxel(PolyVox::Vector3DInt32 position);
         void deleteVoxel(PolyVox::Vector3DInt32 position);
         
+        // Indicates when the mesher thread is ready to be uploaded
+        bool mesherReady();
+        
     public:
         Voxel(Shader * shader);
         ~Voxel();
@@ -68,7 +72,7 @@ namespace XK {
         
     private:
     
-        PolyVox::RawVolume<PolyVox::MaterialDensityPair88>* volumes;
+        PolyVox::PagedVolume<PolyVox::MaterialDensityPair88> * volumes;
         OpenGLMeshData mData;
         Shader * mShader;
         Camera * mCamera;
@@ -77,10 +81,6 @@ namespace XK {
         bool expectMesher = false;
         std::future<void> mesherFuture;
         std::function<void()> * mesherPayload;
-        bool mesherReady() {
-            return expectMesher
-                && mesherFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-        }
         
     };
 };

@@ -34,9 +34,11 @@ include_directories(Forge/Headers/
                     Forge/Vendor/glfw/include/
                     Forge/Vendor/glm/
                     Forge/Vendor/stb/
-                    Forge/Vendor/polyvox/include/)
+                    Forge/Vendor/polyvox/include/
+                    Forge/Vendor/fastnoise/)
 
-file(GLOB VENDORS_SOURCES Forge/Vendor/glad/src/glad.c)
+file(GLOB VENDORS_SOURCES Forge/Vendor/glad/src/glad.c
+                          Forge/Vendor/fastnoise/FastNoise.cpp)
 file(GLOB PROJECT_HEADERS Forge/Headers/*.hpp)
 file(GLOB PROJECT_SOURCES Forge/Sources/*.cpp)
 file(GLOB PROJECT_SHADERS Forge/Shaders/*.comp

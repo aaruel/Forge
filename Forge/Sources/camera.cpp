@@ -32,6 +32,8 @@ void Camera::render(GLint shader) {
     glUniformMatrix4fv(uniformMVP1, 1, GL_FALSE, glm::value_ptr(view));
     GLint uniformMVP2 = glGetUniformLocation(shader, "projection");
     glUniformMatrix4fv(uniformMVP2, 1, GL_FALSE, glm::value_ptr(proj));
+    GLint uniformMVP3 = glGetUniformLocation(shader, "eye");
+    glUniform3fv(uniformMVP3, 1, glm::value_ptr(eye));
 }
 
 void Camera::translate(glm::vec3 amount) {
@@ -41,7 +43,7 @@ void Camera::translate(glm::vec3 amount) {
 void Camera::update() {
     processMouse();
     processKeys();
-    vupdate();
+    reloadView();
 }
 
 // Private
@@ -72,11 +74,15 @@ void Camera::processMouse() {
 }
 
 void Camera::processKeys() {
+    GLfloat multiplier = 1.0f;
+    if (input->isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+        multiplier *= 4.0f;
+    }
     if (input->isKeyPressed(GLFW_KEY_W)) {
-        position += speed * eye;
+        position += speed * eye * multiplier;
     }
     if (input->isKeyPressed(GLFW_KEY_S)) {
-        position -= speed * eye;
+        position -= speed * eye * multiplier;
     }
     if (input->isKeyPressed(GLFW_KEY_A)) {
         position -= glm::normalize(glm::cross(eye, up)) * speed;
@@ -92,7 +98,7 @@ void Camera::processKeys() {
     }
 }
 
-void Camera::vupdate() {
+void Camera::reloadView() {
     view = glm::lookAt(
         position,
         // In order to translate based on the eye

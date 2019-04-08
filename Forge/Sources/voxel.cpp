@@ -6,13 +6,8 @@
 //
 
 #include "voxel.hpp"
-
-#define BENCHMARK(code) \
-auto __start = std::chrono::high_resolution_clock::now(); \
-code \
-auto __end = std::chrono::high_resolution_clock::now(); \
-auto __result = std::chrono::duration_cast<std::chrono::duration<double>>(__end - __start); \
-std::cout << "BENCH: " << __result.count() << std::endl;
+#include "voxelfunctors.hpp"
+#include "utils.hpp"
 
 using namespace PolyVox;
 
@@ -22,41 +17,41 @@ namespace XK {
     //////////////
 
     Voxel::Voxel(Shader * shader) : mShader(shader), mCamera(Camera::getInstance()) {
+        auto * pager = new FastNoisePager<MaterialDensityPair88>();
+        
         // Generate volumetric mesh
-        auto volData = new RawVolume<MaterialDensityPair88>(Region(
-            Vector3DInt32(0, 0, 0),
-            Vector3DInt32(63, 63, 63)
-        ));
-        createSphereInVolume(*volData, 30, 1);
-        volumes = (volData);
+        volumes = new PagedVolume<MaterialDensityPair88>(pager, 16 * 1024 * 1024, 64);
+        // volumes = new RawVolume<MaterialDensityPair88>(Region(Vector3DInt32(0), Vector3DInt32(64)));
+        // createSphereInVolume(*volumes, 30, 1);
         
         makeRenderable();
     }
     
+    Voxel::~Voxel() {
+        delete volumes;
+    }
+    
     void Voxel::render() {
-        // Our example framework only uses a single shader for the scene (for all meshes).
+        // Switch to the voxel shader
         mShader->activate();
 
-        // These two matrices are constant for all meshes.
+        // Send view + projection to voxel shader
         mCamera->render(mShader->get());
+        
+        //Set up the model matrix based on provided translation and scale.
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        glm::translate(modelMatrix, mData.translation);
+        glm::scale(modelMatrix, glm::vec3(mData.scale));
+        
+        GLint Umodel = glGetUniformLocation(mShader->get(), "model");
+        glUniformMatrix4fv(Umodel, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-        // Iterate over each mesh which the user added to our list, and render it.
-        {
-            OpenGLMeshData &meshData = mData;
-            //Set up the model matrrix based on provided translation and scale.
-            glm::mat4 modelMatrix = glm::mat4(1.0f);
-            glm::translate(modelMatrix, meshData.translation);
-            glm::scale(modelMatrix, glm::vec3(meshData.scale));
-            GLint Umodel = glGetUniformLocation(mShader->get(), "model");
-            glUniformMatrix4fv(Umodel, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
-            // Bind the vertex array for the current mesh
-            glBindVertexArray(meshData.vertexArrayObject);
-            // Draw the mesh
-            glDrawElements(GL_TRIANGLES, meshData.noOfIndices, meshData.indexType, 0);
-            // Unbind the vertex array.
-            glBindVertexArray(0);
-        }
+        // Bind the vertex array for the current mesh
+        glBindVertexArray(mData.vertexArrayObject);
+        // Draw the mesh
+        glDrawElements(GL_TRIANGLES, mData.noOfIndices, mData.indexType, 0);
+        // Unbind the vertex array.
+        glBindVertexArray(0);
         
         // Try to raycast for block updates
         Input * input = Input::getInstance();
@@ -104,45 +99,13 @@ namespace XK {
         makeRenderable(true);
     }
     
-    ////////////////////////
-    /// EXTERNAL FUNCTOR ///
-    ////////////////////////
-    class RaycastTestFunctor {
-    public:
-        RaycastTestFunctor()
-            : mValid(false)
-        {}
-
-        bool operator()(const RawVolume<MaterialDensityPair88>::Sampler& sampler) {
-            // Run until the ray hits a voxel with volume
-            MaterialDensityPair88 current = sampler.getVoxel();
-            if (sampler.isCurrentPositionValid() && current != mInvalidVoxel) {
-                mValid = true;
-                // Stop iterating after finding valid voxel
-                location = sampler.getPosition();
-                return false;
-            }
-            
-            // Save the previous block! Nice trick to write an adjacent block
-            prevLocation = sampler.getPosition();
-            
-            // We are in the volume, so decide whether to continue based on the voxel value.
-            return true;
-        }
-        
-        MaterialDensityPair88 mInvalidVoxel = MaterialDensityPair88(0, 0);
-        bool mValid;
-        Vector3DInt32 prevLocation;
-        Vector3DInt32 location;
-    };
-    
     bool Voxel::getVoxelFromEye(Vector3DInt32 & result, bool adjacent) {
         glm::vec3 position = mCamera->getPosition();
         // The eye is normalized, extended by 100
         glm::vec3 eye = mCamera->getEye() * 100.0f;
         Vector3DFloat vp = Vector3DFloat(position.x, position.y, position.z);
         Vector3DFloat ve = Vector3DFloat(eye.x, eye.y, eye.z);
-        RaycastTestFunctor raycastCallback;
+        RaycastTest raycastCallback;
         
         // Raycast
         raycastWithDirection(volumes, vp, ve, raycastCallback);
@@ -153,20 +116,25 @@ namespace XK {
         return raycastCallback.mValid;
     }
     
-    Voxel::~Voxel() {
-        delete volumes;
-    }
-    
     ///////////////
     /// Private ///
     ///////////////
     
+    bool Voxel::mesherReady() {
+        using secs = std::chrono::seconds;
+        using future = std::future_status;
+        future status = mesherFuture.wait_for(secs(0));
+        return expectMesher && status == future::ready;
+    }
+    
     void Voxel::makeRenderable(bool updating) {
         expectMesher = true;
         mesherFuture = std::async([this, &updating](){
-            // slow as heck
+            // Relatively slow
             // Generate renderable
-            auto mesh = extractMarchingCubesMesh(volumes, volumes->getEnclosingRegion());
+            Region reg(Vector3DInt32(0, 0, 0), Vector3DInt32(254, 254, 254));
+            auto mesh = extractMarchingCubesMesh(volumes, reg);
+            // auto mesh = extractMarchingCubesMesh(volumes, volumes->getEnclosingRegion());
             // Decode
             auto decoMesh = decodeMesh(mesh);
             if (updating) {
@@ -197,20 +165,17 @@ namespace XK {
 
             //If the current voxel is less than 'radius' units from the center
             //then we make it solid, otherwise we make it empty space.
-            if (fDistToCenter <= fRadius) {
-            
-                unsigned short d = uValue > 0
-                    ? MaterialDensityPair88::getMaxDensity()
-                    : MaterialDensityPair88::getMinDensity();
-                
-                volData.setVoxel(
-                    x,
-                    y,
-                    z,
-                    MaterialDensityPair88(uValue, d)
-                );
-                
-            }
+            uint8_t uVoxelValue = 0;
+            float val = fRadius - fDistToCenter; // val is positive when inside sphere
+            val = clamp(val, -1.0f, 1.0f); // val is between -1.0 and 1.0
+            val += 1.0f; // val is between 0.0 and 2.0
+            val *= 127.5f; // val is between 0.0 and 255
+
+            // Cast to int
+            uVoxelValue = static_cast<uint8_t>(val);
+
+            //Wrte the voxel value into the volume
+            volData.setVoxel(x, y, z, MaterialDensityPair88(uValue, uVoxelValue));
         }
     }
     
@@ -292,38 +257,32 @@ namespace XK {
 
         // The GL_ARRAY_BUFFER will contain the list of vertex positions
         // AoS organized (pos, normal, data)[]
-        // Double the size for sub-buffer updating
+        // The layout will be reflected in the following VertexAttribPointer calls
         glGenBuffers(1, &(meshData.vertexBuffer));
         glBindBuffer(GL_ARRAY_BUFFER, meshData.vertexBuffer);
         glBufferData(GL_ARRAY_BUFFER, surfaceMesh.getNoOfVertices() * sizeof(typename MeshType::VertexType), surfaceMesh.getRawVertexData(), GL_DYNAMIC_DRAW);
 
-        // and GL_ELEMENT_ARRAY_BUFFER will contain the indices
+        // Create a buffer for the mesh indices
         glGenBuffers(1, &(meshData.indexBuffer));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshData.indexBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, surfaceMesh.getNoOfIndices() * sizeof(typename MeshType::IndexType), surfaceMesh.getRawIndexData(), GL_DYNAMIC_DRAW);
 
-        // Every surface extractor outputs valid positions for the vertices, so tell OpenGL how these are laid out
+        // Vertices layout
         glEnableVertexAttribArray(0); // Attrib '0' is the vertex positions
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(typename MeshType::VertexType), (GLvoid*)(offsetof(typename MeshType::VertexType, position))); //take the first 3 floats from every sizeof(decltype(vecVertices)::value_type)
 
-        // Some surface extractors also generate normals, so tell OpenGL how these are laid out. If a surface extractor
-        // does not generate normals then nonsense values are written into the buffer here and sghould be ignored by the
-        // shader. This is mostly just to simplify this example code - in a real application you will know whether your
-        // chosen surface extractor generates normals and can skip uploading them if not.
+        // Normals layout
         glEnableVertexAttribArray(1); // Attrib '1' is the vertex normals.
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(typename MeshType::VertexType), (GLvoid*)(offsetof(typename MeshType::VertexType, normal)));
 
-        // Finally a surface extractor will probably output additional data. This is highly application dependant. For this example code
-        // we're just uploading it as a set of bytes which we can read individually, but real code will want to do something specialised here.
-        glEnableVertexAttribArray(2); //We're talking about shader attribute '2'
-        GLint size = (std::min)(sizeof(typename MeshType::VertexType::DataType), size_t(4)); // Can't upload more that 4 components (vec4 is GLSL's biggest type)
+        // Any extra data
+        glEnableVertexAttribArray(2); // We're talking about shader attribute '2'
+        // Can't upload more that 4 components (vec4 is GLSL's biggest type)
+        GLint size = (std::min)(sizeof(typename MeshType::VertexType::DataType), size_t(4));
         glVertexAttribIPointer(2, size, GL_UNSIGNED_BYTE, sizeof(typename MeshType::VertexType), (GLvoid*)(offsetof(typename MeshType::VertexType, data)));
 
-        // We're done uploading and can now unbind and delete the buffers.
-        // As long as VBOs are referenced in the VAO, nothing bad happens.
+        // Reset VAO binding
         glBindVertexArray(0);
-//        glDeleteBuffers(1, &meshData.vertexBuffer);
-//        glDeleteBuffers(1, &meshData.indexBuffer);
 
         // A few additional properties can be copied across for use during rendering.
         meshData.noOfIndices = surfaceMesh.getNoOfIndices();

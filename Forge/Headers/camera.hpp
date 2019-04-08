@@ -29,7 +29,7 @@ public:
     static Camera * getInstance();
     
 private:
-    void vupdate();
+    void reloadView();
     void processMouse();
     void processKeys();
     
@@ -58,7 +58,7 @@ private:
     // aspect ratio is screen size
     // distance 1 near plane clipping
     // distance 100 far plane clipping
-    glm::mat4 proj = glm::perspective(45.0f, (float)mWidth / (float)mHeight, 0.1f, 100.0f);
+    glm::mat4 proj = glm::perspective(45.0f, (float)mWidth / (float)mHeight, 0.1f, 1000.0f);
 };
 
 #endif /* camera_h */

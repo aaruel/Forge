@@ -6,6 +6,7 @@
 #include "input.hpp"
 #include "skybox.hpp"
 #include "voxel.hpp"
+#include "console.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -17,7 +18,6 @@
 using namespace XK;
 
 int main() {
-
     // Load GLFW and Create a Window
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -56,6 +56,9 @@ int main() {
     // Voxel meshing
     Voxel voxel(&voxelShader);
     
+    // Text console
+    Console console;
+    
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
         if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -73,6 +76,9 @@ int main() {
         
         // Voxel rendering
         voxel.render();
+        
+        // Console rendering
+        console.render();
         
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);

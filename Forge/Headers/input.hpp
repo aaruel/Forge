@@ -9,6 +9,7 @@
 #define input_h
 
 #include <GLFW/glfw3.h>
+#include <functional>
 
 class Input {
 public:
@@ -32,6 +33,7 @@ public:
     
     // Keys
     bool isKeyPressed(int);
+    void registerKeyEvent(int key, std::function<void()> function);
     
     // Mouse Buttons
     bool isLeftClick();

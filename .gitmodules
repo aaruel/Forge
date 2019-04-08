@@ -26,3 +26,11 @@
 	path = Forge/Vendor/polyvox
 	url = https://bitbucket.org/volumesoffun/polyvox.git
 	branch = develop
+[submodule "Forge/Vendor/fastnoise"]
+	path = Forge/Vendor/fastnoise
+	url = https://github.com/Auburns/FastNoise.git
+	branch = master
+[submodule "Forge/Vendor/gltext"]
+	path = Forge/Vendor/gltext
+	url = https://github.com/Vallentin/glText.git
+	branch = master
