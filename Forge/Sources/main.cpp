@@ -10,6 +10,7 @@
 
 // System Headers
 #include <glad/glad.h>
+#include <nuklear.h>
 
 // Standard Headers
 #include <cstdio>
@@ -21,7 +22,7 @@ int main() {
     // Load GLFW and Create a Window
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
@@ -38,14 +39,17 @@ int main() {
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_FRAMEBUFFER_SRGB);
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
     
     // Build shader
     Shader shader;
-    shader.attach("phong.vert").attach("phong.frag").link();
+    shader.attach("main.vert").attach("main.frag").link();
     
     Shader voxelShader;
-    voxelShader.attach("voxel.vert").attach("voxel.frag").link();
+    voxelShader.attach("voxel2.vert").attach("voxel2.frag").link();
+//    Shader pbr;
+//    pbr.attach("pbr.vert").attach("pbr.frag").link();
     
     // Instantiate camera
     Camera * camera = Camera::getInstance();
@@ -55,6 +59,10 @@ int main() {
     
     // Voxel meshing
     Voxel voxel(&voxelShader);
+    voxel
+        .addTexture("SnowBase", "snow/snow-base.png")
+        .addTexture("SnowNormal", "snow/snow-normal.png")
+        .addTexture("HeightMap", "snow/snow-height.png");
     
     // Text console
     Console console;
@@ -65,7 +73,7 @@ int main() {
             glfwSetWindowShouldClose(mWindow, true);
 
         // Background Fill Color
-        glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         // Step camera

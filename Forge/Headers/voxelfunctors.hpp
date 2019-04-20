@@ -12,8 +12,7 @@
 #include <PolyVox/MaterialDensityPair.h>
 #include <PolyVox/Raycast.h>
 #include <PolyVox/PagedVolume.h>
-#include <FastNoise.h>
-#include "perlin.hpp"
+#include <noise/noise.h>
 
 using namespace PolyVox;
 
@@ -59,19 +58,41 @@ public:
         const PolyVox::Region& region,
         typename PagedVolume<MDP>::Chunk* pChunk
     ) {
-        Perlin perlin(2, 2, 1, 234);
+        using namespace noise;
         
-        FastNoise noise;
-        noise.SetNoiseType(FastNoise::PerlinFractal);
-        noise.SetFractalOctaves(2.0);
-        noise.SetFrequency(2.0);
-        noise.SetGradientPerturbAmp(1.0);
+        /// Improvement: Generate a height map and pass into constructor
+        /// or an external generator
+        
+        // Mountain Range Area
+        module::RidgedMulti mountain;
+        mountain.SetOctaveCount(4);
+        mountain.SetLacunarity(2.f);
+        
+        // Flat Area
+        module::Billow baseFlat;
+        module::ScaleBias flat;
+        flat.SetSourceModule(0, baseFlat);
+        flat.SetScale(0.125);
+        flat.SetBias(-0.75);
+        
+        // Terrain Type Randomizer
+        module::Perlin biome;
+        biome.SetFrequency(0.5);
+        biome.SetPersistence(0.25);
+        
+        // Final Stage
+        module::Select mynoise;
+        mynoise.SetSourceModule(0, flat);
+        mynoise.SetSourceModule(1, mountain);
+        mynoise.SetControlModule(biome);
+        mynoise.SetEdgeFalloff(0.125);
         
         for (int x = region.getLowerX(); x <= region.getUpperX(); x++)
         for (int z = region.getLowerZ(); z <= region.getUpperZ(); z++) {
-            float noiseVal = perlin.Get(
-                x / static_cast<float>(254),
-                z / static_cast<float>(254)
+            float noiseVal = mynoise.GetValue(
+                x / static_cast<float>(250),
+                z / static_cast<float>(250),
+                1.0
             );
             noiseVal *= 64;
             noiseVal += 100;

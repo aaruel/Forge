@@ -34,3 +34,11 @@
 	path = Forge/Vendor/gltext
 	url = https://github.com/Vallentin/glText.git
 	branch = master
+[submodule "Forge/Vendor/libnoise"]
+	path = Forge/Vendor/libnoise
+	url = https://github.com/eXpl0it3r/libnoise.git
+	branch = master
+[submodule "Forge/Vendor/nuklear"]
+	path = Forge/Vendor/nuklear
+	url = https://github.com/vurtun/nuklear.git
+	branch = master

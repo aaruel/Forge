@@ -13,9 +13,11 @@
 #define GLT_IMPLEMENTATION
 #include <gltext.h>
 #include <iostream>
+#include <sstream>
 
 class Console {
 private:
+    void getPlayer();
     
 public:
     Console();
@@ -27,6 +29,7 @@ public:
 private:
     // Start with the console hidden
     bool renderable = false;
+    std::stringstream position;
     GLTtext * text;
 };
 

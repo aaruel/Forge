@@ -18,6 +18,8 @@ option(BUILD_OPENGL3_DEMOS OFF)
 option(BUILD_UNIT_TESTS OFF)
 add_subdirectory(Forge/Vendor/bullet)
 
+add_subdirectory(Forge/Vendor/libnoise)
+
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 else()
@@ -35,7 +37,10 @@ include_directories(Forge/Headers/
                     Forge/Vendor/glm/
                     Forge/Vendor/stb/
                     Forge/Vendor/polyvox/include/
-                    Forge/Vendor/fastnoise/)
+                    Forge/Vendor/fastnoise/
+                    Forge/Vendor/libnoise/include/
+                    Forge/Vendor/gltext/
+                    Forge/Vendor/nuklear/)
 
 file(GLOB VENDORS_SOURCES Forge/Vendor/glad/src/glad.c
                           Forge/Vendor/fastnoise/FastNoise.cpp)
@@ -63,6 +68,7 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS}
                                ${VENDORS_SOURCES})
 target_link_libraries(${PROJECT_NAME} assimp glfw
                       ${GLFW_LIBRARIES} ${GLAD_LIBRARIES}
-                      BulletDynamics BulletCollision LinearMath)
+                      BulletDynamics BulletCollision LinearMath 
+                      libnoise)
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${PROJECT_NAME})

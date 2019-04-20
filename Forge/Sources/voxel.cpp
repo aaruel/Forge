@@ -5,6 +5,8 @@
 //  Created by Aaron Ruel on 4/1/19.
 //
 
+#include <stb_image.h>
+
 #include "voxel.hpp"
 #include "voxelfunctors.hpp"
 #include "utils.hpp"
@@ -35,16 +37,27 @@ namespace XK {
         // Switch to the voxel shader
         mShader->activate();
 
+        GLuint nShader = mShader->get();
+
         // Send view + projection to voxel shader
-        mCamera->render(mShader->get());
+        mCamera->render(nShader);
         
         //Set up the model matrix based on provided translation and scale.
         glm::mat4 modelMatrix = glm::mat4(1.0f);
         glm::translate(modelMatrix, mData.translation);
         glm::scale(modelMatrix, glm::vec3(mData.scale));
         
-        GLint Umodel = glGetUniformLocation(mShader->get(), "model");
+        // Send variables
+        GLint Umodel = glGetUniformLocation(nShader, "model");
         glUniformMatrix4fv(Umodel, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+        // Process added textures
+        for (Texture & texture : textures) {
+            GLuint textureLocation = glGetUniformLocation(nShader, texture.location.c_str());
+            glUniform1i(textureLocation, texture.unit);
+            glActiveTexture(GL_TEXTURE0 + texture.unit);
+            glBindTexture(GL_TEXTURE_2D, texture.buffer);
+        }
 
         // Bind the vertex array for the current mesh
         glBindVertexArray(mData.vertexArrayObject);
@@ -52,6 +65,8 @@ namespace XK {
         glDrawElements(GL_TRIANGLES, mData.noOfIndices, mData.indexType, 0);
         // Unbind the vertex array.
         glBindVertexArray(0);
+        
+        // POST RENDERING //
         
         // Try to raycast for block updates
         Input * input = Input::getInstance();
@@ -73,6 +88,50 @@ namespace XK {
             delete mesherPayload;
             expectMesher = false;
         }
+    }
+    
+    Voxel & Voxel::addTexture(std::string texLocation, std::string filename) {
+        // Define Some Local Variables
+        GLenum format;
+        // texture
+        Texture texture;
+        texture.location = texLocation;
+        texture.unit = nTextures++;
+        std::string mode;
+        int width, height, channels;
+
+        // Load the Texture Image from File
+        filename = PROJECT_SOURCE_DIR "/Textures/" + filename;
+        unsigned char * image = stbi_load(filename.c_str(), & width, & height, & channels, 0);
+        if (!image) fprintf(stderr, "%s %s\n", "Failed to Load Texture", filename.c_str());
+
+        // Set the Correct Channel Format
+        switch (channels) {
+            case 1 : format = GL_ALPHA;     break;
+            case 2 : format = GL_LUMINANCE; break;
+            case 3 : format = GL_RGB;       break;
+            case 4 : format = GL_RGBA;      break;
+        }
+
+        // Bind Texture and Set Filtering Levels
+        glGenTextures(1, & texture.buffer);
+        glBindTexture(GL_TEXTURE_2D, texture.buffer);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, format,
+            width, height, 0, format, GL_UNSIGNED_BYTE, image
+        );
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        // Release Image Pointer and Store the Texture
+        stbi_image_free(image);
+        
+        textures.push_back(texture);
+        
+        return *this;
     }
     
     void Voxel::addVoxel(Vector3DInt32 position) {

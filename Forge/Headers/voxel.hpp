@@ -23,6 +23,7 @@
 #include <glm/glm.hpp>
 #include <future>
 #include <chrono>
+#include <vector>
 
 namespace XK {
     struct OpenGLMeshData {
@@ -35,6 +36,12 @@ namespace XK {
         GLuint vertexArrayObject;
         glm::vec3 translation;
         float scale;
+    };
+    
+    struct Texture {
+        GLuint buffer;
+        int unit;
+        std::string location;
     };
 
     class Voxel {
@@ -69,6 +76,8 @@ namespace XK {
         
         void render();
         bool getVoxelFromEye(PolyVox::Vector3DInt32 & result, bool adjacent = true);
+        // Builder pattern texture adding
+        Voxel & addTexture(std::string texLocation, std::string filename);
         
     private:
     
@@ -81,6 +90,14 @@ namespace XK {
         bool expectMesher = false;
         std::future<void> mesherFuture;
         std::function<void()> * mesherPayload;
+        
+        /// Textures
+        int nTextures = 0;
+        std::vector<Texture> textures;
+        
+        // Disable Copying and Assignment
+        Voxel(Voxel const &) = delete;
+        Voxel & operator=(Voxel const &) = delete;
         
     };
 };
