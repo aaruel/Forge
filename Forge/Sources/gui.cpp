@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cstdarg>
 #include <glad/glad.h>
+#include <kangaru/kangaru.hpp>
 
 using namespace std;
 
@@ -27,7 +28,10 @@ using namespace std;
 #define NK_KEYSTATE_BASED_INPUT
 #include <nuklear.h>
 #include "nuklear_glfw.hpp"
+
+// Local Headers
 #include "input.hpp"
+#include "console.hpp"
 
 #define MAX_VERTEX_BUFFER 512 * 1024
 #define MAX_ELEMENT_BUFFER 128 * 1024
@@ -37,7 +41,12 @@ static struct nk_font_atlas * atlas;
 static struct nk_colorf bg;
 GLFWwindow * _window;
 Input * inputInst;
-char consoleBuffer[256];
+// Input buffer
+Buffer consoleBuffer = std::make_unique<char[]>(BufferSize);
+// DI
+kgr::container container;
+// Variable sized lua console
+Console<> &console = container.service<ConsoleService<>>();
 
 void XK::GUI::init(GLFWwindow * window) {
     inputInst = Input::getInstance();
@@ -54,33 +63,34 @@ void XK::GUI::init(GLFWwindow * window) {
     });
 }
 
-void input_console(void (*exec)(char*)) {
+void input_console() {
     if (nk_begin(
         _ctx,
         "Console",
         nk_rect(50, 50, 230, 250),
         NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE
     )) {
+        const Buffer & luaBuffer = console.getConsoleBuffer();
         nk_layout_row_dynamic(_ctx, 160, 1);
         nk_edit_string_zero_terminated(
             _ctx,
             NK_EDIT_EDITOR,
-            consoleBuffer, sizeof(consoleBuffer),
+            luaBuffer.get(), BufferSize,
             nk_filter_ascii
         );
         nk_layout_row_dynamic(_ctx, 30, 2);
         nk_edit_string_zero_terminated(
             _ctx,
             NK_EDIT_BOX,
-            consoleBuffer, sizeof(consoleBuffer),
+            consoleBuffer.get(), BufferSize,
             nk_filter_ascii
         );
         if (nk_button_label(_ctx, "Submit")) {
             // send to the executing function
-            if (exec) exec(consoleBuffer);
+            console.executeLua(consoleBuffer);
             
             // clear the buffer
-            memset(consoleBuffer, 0, 255);
+            memset(consoleBuffer.get(), 0, 255);
         }
     }
     nk_end(_ctx);
@@ -100,7 +110,7 @@ void XK::GUI::render() {
     // ignore gui unless toggled
     if (inputInst->mouseIsCaptured()) return;
     nk_glfw3_new_frame();
-    input_console(nullptr);
+    input_console();
     close_windows();
     nk_glfw3_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
 }

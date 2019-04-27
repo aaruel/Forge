@@ -65,7 +65,7 @@ int main() {
         .addTexture("HeightMap", "snow/snow-height.png");
     
     // Text console
-    Console console;
+    // Console console;
     
     // GUI
     GUI::init(mWindow);
@@ -90,7 +90,7 @@ int main() {
         voxel.render();
         
         // Console rendering
-        console.render();
+        // console.render();
         GUI::render();
         
         // Flip Buffers and Draw

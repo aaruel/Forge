@@ -14,25 +14,42 @@
 #include <gltext.h>
 #include <iostream>
 #include <sstream>
+#include <kangaru/kangaru.hpp>
+#include <sstream>
+#include "utils.hpp"
 #include "sol.hpp"
 
+using Buffer = std::unique_ptr<char[]>;
+constexpr size_t BufferSize = 256;
+
+template<size_t SIZE = BufferSize>
 class Console {
 private:
-    void getPlayer();
+    Buffer buffer = std::make_unique<char[]>(SIZE);
+    omemstream<SIZE> bufOut;
     
 public:
-    Console();
-    ~Console();
-    void render();
-    void toggleDisplay();
-    void setText(std::string);
+    Console() : bufOut(buffer.get()) {
+        lua.set_function("world", [this]{
+            bufOut << "it says hello" << std::endl;
+        });
+    }
+    
+    ~Console() {}
+    
+    /// Buffer getter
+    const Buffer& getConsoleBuffer() const { return buffer; }
+    
+    /// Pass code buffer to be evaluated
+    void executeLua(Buffer& input) {
+        lua.script(std::string(input.get()));
+    };
     
 private:
-    // Start with the console hidden
-    bool renderable = false;
-    std::stringstream position;
-    GLTtext * text;
     sol::state lua;
 };
+
+template<size_t SIZE = BufferSize>
+struct ConsoleService : kgr::single_service<Console<SIZE>> {};
 
 #endif /* console_h */

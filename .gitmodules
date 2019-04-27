@@ -50,3 +50,7 @@
 	path = Forge/Vendor/luajit
 	url = https://github.com/LuaDist/luajit.git
 	branch = master
+[submodule "Forge/Vendor/kangaru"]
+	path = Forge/Vendor/kangaru
+	url = https://github.com/gracicot/kangaru.git
+	branch = master
