@@ -38,6 +38,7 @@
 	path = Forge/Vendor/libnoise
 	url = https://github.com/eXpl0it3r/libnoise.git
 	branch = master
+	ignore = dirty
 [submodule "Forge/Vendor/nuklear"]
 	path = Forge/Vendor/nuklear
 	url = https://github.com/vurtun/nuklear.git
@@ -50,6 +51,7 @@
 	path = Forge/Vendor/luajit
 	url = https://github.com/LuaDist/luajit.git
 	branch = master
+	ignore = dirty
 [submodule "Forge/Vendor/kangaru"]
 	path = Forge/Vendor/kangaru
 	url = https://github.com/gracicot/kangaru.git
