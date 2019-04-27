@@ -30,6 +30,8 @@ public:
     MousePos getMousePos();
     bool isNewPos();
     void resetPosBool();
+    void toggleMouseCapture();
+    bool mouseIsCaptured();
     
     // Keys
     bool isKeyPressed(int);

@@ -1,5 +1,15 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(Forge)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "-std=c++17")
+
+set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 ${CMAKE_EXE_LINKER_FLAGS}" )
+set ( CMAKE_SHARED_LINKER_FLAGS "-image_base 7fff04c4a000" ${CMAKE_SHARED_LINKER_FLAGS})
+
+set(CMAKE_MACOSX_RPATH 1)
+add_subdirectory(Forge/Vendor/luajit)
 
 option(GLFW_BUILD_DOCS OFF)
 option(GLFW_BUILD_EXAMPLES OFF)
@@ -40,7 +50,9 @@ include_directories(Forge/Headers/
                     Forge/Vendor/fastnoise/
                     Forge/Vendor/libnoise/include/
                     Forge/Vendor/gltext/
-                    Forge/Vendor/nuklear/)
+                    Forge/Vendor/nuklear/
+                    Forge/Vendor/sol2/include/
+                    Forge/Vendor/luajit/src/)
 
 file(GLOB VENDORS_SOURCES Forge/Vendor/glad/src/glad.c
                           Forge/Vendor/fastnoise/FastNoise.cpp)
@@ -66,9 +78,9 @@ add_definitions(-DGLFW_INCLUDE_NONE
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS}
                                ${PROJECT_SHADERS} ${PROJECT_CONFIGS}
                                ${VENDORS_SOURCES})
-target_link_libraries(${PROJECT_NAME} assimp glfw
+target_link_libraries(${PROJECT_NAME} assimp glfw liblua
                       ${GLFW_LIBRARIES} ${GLAD_LIBRARIES}
                       BulletDynamics BulletCollision LinearMath 
                       libnoise)
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES ${LUAJIT_LINK_FLAGS}
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${PROJECT_NAME})

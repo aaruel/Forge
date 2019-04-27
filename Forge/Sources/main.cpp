@@ -10,7 +10,7 @@
 
 // System Headers
 #include <glad/glad.h>
-#include <nuklear.h>
+#include "gui.hpp"
 
 // Standard Headers
 #include <cstdio>
@@ -39,7 +39,7 @@ int main() {
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_FRAMEBUFFER_SRGB);
+    //glEnable(GL_FRAMEBUFFER_SRGB);
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
     
     // Build shader
@@ -67,6 +67,9 @@ int main() {
     // Text console
     Console console;
     
+    // GUI
+    GUI::init(mWindow);
+    
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
         if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -82,16 +85,18 @@ int main() {
         // Draw skybox first so the actual map doesn't clip
         skybox.draw();
         
+        
         // Voxel rendering
         voxel.render();
         
         // Console rendering
         console.render();
+        GUI::render();
         
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }   glfwTerminate();
-    
+    XK::GUI::destroy();
     return EXIT_SUCCESS;
 }

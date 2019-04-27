@@ -10,6 +10,8 @@
 #include "camera.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtx/string_cast.hpp>
+#include <cstddef>
+
 
 Console::Console() {
     gltInit();
@@ -18,6 +20,12 @@ Console::Console() {
         toggleDisplay();
     });
     setText("hello\nworld");
+    
+    lua.set_function("world", []{
+        std::cout << "it says hello" << std::endl;
+    });
+    
+    lua.script("world()");
 }
 
 Console::~Console() {

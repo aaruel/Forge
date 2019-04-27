@@ -14,6 +14,7 @@
 #include <gltext.h>
 #include <iostream>
 #include <sstream>
+#include "sol.hpp"
 
 class Console {
 private:
@@ -31,6 +32,7 @@ private:
     bool renderable = false;
     std::stringstream position;
     GLTtext * text;
+    sol::state lua;
 };
 
 #endif /* console_h */

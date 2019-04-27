@@ -42,3 +42,11 @@
 	path = Forge/Vendor/nuklear
 	url = https://github.com/vurtun/nuklear.git
 	branch = master
+[submodule "Forge/Vendor/sol2"]
+	path = Forge/Vendor/sol2
+	url = https://github.com/ThePhD/sol2.git
+	branch = sol3
+[submodule "Forge/Vendor/luajit"]
+	path = Forge/Vendor/luajit
+	url = https://github.com/LuaDist/luajit.git
+	branch = master

@@ -13,6 +13,9 @@
 // Global variables because callback typing!
 Input::MousePos mousepos;
 Input::MouseBut mousebut;
+// Switches input contexts to GUI layer
+bool mouseCapture = true;
+// Key registry
 bool newPos = false;
 std::map<
     int,
@@ -22,6 +25,7 @@ std::map<
 Input * Input::instance = 0;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (!mouseCapture) return;
     // prevent mouse jumping
     if(mousepos.firstMouse) {
         mousepos.offsX = 0.0f;
@@ -37,6 +41,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 void mouse_button_callback(GLFWwindow*, int button, int action, int) {
+    if (!mouseCapture) return;
     if (action == GLFW_PRESS) {
         switch (button) {
             case GLFW_MOUSE_BUTTON_LEFT:
@@ -53,6 +58,7 @@ void mouse_button_callback(GLFWwindow*, int button, int action, int) {
 
 void key_callback(GLFWwindow *, int key, int, int action, int) {
     if (action != GLFW_PRESS) return;
+    if (!mouseCapture) return;
     // Executed any hooked event callbacks
     if (keyEmitter.count(key)) {
         for (auto & function : keyEmitter[key]) {
@@ -90,9 +96,25 @@ void Input::resetPosBool() {
     newPos = false;
 }
 
+void Input::toggleMouseCapture() {
+    mouseCapture = !mouseCapture;
+    if (!mouseCapture) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+    else {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetCursorPos(window, 0.0f, 0.0f);
+    }
+}
+
+bool Input::mouseIsCaptured() {
+    return mouseCapture;
+}
+
 // Keys
 
 bool Input::isKeyPressed(int key) {
+    if (!mouseCapture) return false;
     return glfwGetKey(window, key) == GLFW_PRESS;
 }
 
