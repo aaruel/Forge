@@ -78,7 +78,7 @@ namespace XK
         std::vector<GLuint> mIndices;
         std::vector<Vertex> mVertices;
         std::map<GLuint, std::string> mTextures;
-        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        glm::mat4 modelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
         Camera * mCamera;
         Shader * mShader;
 

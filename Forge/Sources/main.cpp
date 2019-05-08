@@ -7,6 +7,7 @@
 #include "skybox.hpp"
 #include "voxel.hpp"
 #include "console.hpp"
+#include "gbuffer.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -48,8 +49,9 @@ int main() {
     
     Shader voxelShader;
     voxelShader.attach("voxel2.vert").attach("voxel2.frag").link();
-//    Shader pbr;
-//    pbr.attach("pbr.vert").attach("pbr.frag").link();
+
+    Shader lighting;
+    lighting.attach("lighting.vert").attach("lighting.frag").link();
     
     // Instantiate camera
     Camera * camera = Camera::getInstance();
@@ -57,12 +59,18 @@ int main() {
     // Instantiate skybox
     Skybox skybox("space/");
     
+    // Build gBuffer
+    GBuffer gbuffer(mWindow);
+    gbuffer.attach(&lighting);
+    
     // Voxel meshing
-    Voxel voxel(&voxelShader);
+    Voxel voxel(gbuffer.getShader());
     voxel
-        .addTexture("SnowBase", "snow/snow-base.png")
+        .addTexture("texture_diffuse", "snow/snow-base.png")
         .addTexture("SnowNormal", "snow/snow-normal.png")
-        .addTexture("HeightMap", "snow/snow-height.png");
+        .addTexture("SSAO", "snow/snow-ao.png");
+    
+    Mesh mesh(gbuffer.getShader(), "sportsCar/sportsCar.obj");
     
     // Text console
     // Console console;
@@ -82,16 +90,24 @@ int main() {
         // Step camera
         camera->update();
         
-        // Draw skybox first so the actual map doesn't clip
-        skybox.draw();
+        // gbuffer framebuffer rendering
+        gbuffer.engage();
         
+            // Voxel rendering
+            voxel.render();
+            mesh.draw();
         
-        // Voxel rendering
-        voxel.render();
+        gbuffer.disengage();
+        
+        // lighting pass
+        gbuffer.runLighting();
         
         // Console rendering
         // console.render();
         GUI::render();
+        
+        // Draw skybox first so the actual map doesn't clip
+        skybox.draw();
         
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);

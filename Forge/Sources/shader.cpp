@@ -9,6 +9,11 @@
 // Define Namespace
 namespace XK
 {
+    static std::vector<Shader*> allShaders;
+    
+    std::vector<Shader*> Shader::getAllShaders() { return allShaders; }
+    void Shader::addToAllShaders(Shader* shader) { allShaders.push_back(shader); }
+
     Shader & Shader::activate()
     {
         glUseProgram(mProgram);
@@ -16,14 +21,16 @@ namespace XK
     }
 
     void Shader::bind(unsigned int location, float value) { glUniform1f(location, value); }
+    void Shader::bind(unsigned int location, int value) { glUniform1i(location, value); }
     void Shader::bind(unsigned int location, glm::mat4 const & matrix)
     { glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix)); }
 
     Shader & Shader::attach(std::string const & filename)
     {
         // Load GLSL Shader Source from File
-        std::string path = PROJECT_SOURCE_DIR "/Shaders/";
-        std::ifstream fd(path + filename);
+        std::string path = PROJECT_SOURCE_DIR "/Shaders/" + filename;
+        mPaths.push_back(filename);
+        std::ifstream fd(path);
         auto src = std::string(std::istreambuf_iterator<char>(fd),
                               (std::istreambuf_iterator<char>()));
 
@@ -72,6 +79,21 @@ namespace XK
             fprintf(stderr, "%s", buffer.get());
         }
         assert(mStatus == true);
+        return *this;
+    }
+    
+    Shader & Shader::reload() {
+        // Reobtain an instance for a program
+        glDeleteProgram(mProgram);
+        mProgram = glCreateProgram();
+        
+        // Reattach shader files
+        Paths paths = mPaths;
+        mPaths.clear();
+        for (std::string & path : paths) attach(path);
+        
+        // link
+        link();
         return *this;
     }
 };

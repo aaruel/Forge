@@ -6,7 +6,7 @@
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-//
+// hello
 //void main()
 //{
 //    vec3 camPos = vec3(0.0, 0.0, 6.0);

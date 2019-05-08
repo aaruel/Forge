@@ -11,6 +11,7 @@
 #include <chrono>
 #include <algorithm>
 #include <iostream>
+#include <regex>
 
 #define BENCHMARK(code) \
 auto __start = std::chrono::high_resolution_clock::now(); \

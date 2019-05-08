@@ -51,7 +51,7 @@ include_directories(Forge/Headers/
                     Forge/Vendor/libnoise/include/
                     Forge/Vendor/gltext/
                     Forge/Vendor/nuklear/
-                    Forge/Vendor/sol2/include/
+                    Forge/Vendor/sol2/single/
                     Forge/Vendor/luajit/src/
                     Forge/Vendor/kangaru/include/)
 

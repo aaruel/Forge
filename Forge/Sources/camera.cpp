@@ -7,6 +7,7 @@
 
 #include "camera.hpp"
 #include "glitter.hpp"
+#include <iostream>
 
 // Static
 
@@ -102,7 +103,7 @@ void Camera::reloadView() {
     view = glm::lookAt(
         position,
         // In order to translate based on the eye
-        eye + position,
+        position + eye,
         up
     );
 }

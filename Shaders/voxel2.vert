@@ -8,9 +8,8 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 camPos;
-uniform sampler2D HeightMap;
 
-out vec3 normal_modelspace;
+out vec3 normal_worldspace;
 out vec3 position_worldspace;
 out vec3 position_cameraspace;
 out vec3 eye_cameraspace;
@@ -18,7 +17,7 @@ out vec3 lightdirection_cameraspace;
 out vec3 normal_cameraspace;
 
 void main() {
-    normal_modelspace = normal.xyz;
+    normal_worldspace = normalize(mat3(transpose(inverse(model)))*normal.xyz);
     position_worldspace = (model * position).xyz;
     position_cameraspace = (view * model * position).xyz;
     eye_cameraspace = vec3(0) - position_cameraspace;

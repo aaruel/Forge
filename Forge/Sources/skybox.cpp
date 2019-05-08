@@ -86,15 +86,12 @@ namespace XK {
     void Skybox::draw() {
         glDepthMask(GL_FALSE);
         shader.activate();
-        
         glBindVertexArray(skyboxArray);
         glBindTexture(GL_TEXTURE_CUBE_MAP, textureId);
         
         // Upload camera uniforms to skybox shader
         camera->render(shader.get());
-        
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        
         glDepthMask(GL_TRUE);
     }
 }
