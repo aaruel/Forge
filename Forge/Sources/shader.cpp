@@ -22,6 +22,8 @@ namespace XK
 
     void Shader::bind(unsigned int location, float value) { glUniform1f(location, value); }
     void Shader::bind(unsigned int location, int value) { glUniform1i(location, value); }
+    void Shader::bind(unsigned int location, glm::vec3 const & vec)
+    { glUniform3fv(location, 1, glm::value_ptr(vec)); }
     void Shader::bind(unsigned int location, glm::mat4 const & matrix)
     { glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix)); }
 

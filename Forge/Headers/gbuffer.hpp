@@ -10,6 +10,7 @@
 
 // Local Headers
 #include "shader.hpp"
+#include "light.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -22,11 +23,11 @@ namespace XK {
     private:
         void initTexture(GLuint * buffer, GLint index, std::function<void()> texImage);
         void initCameraPlane();
-        void runLighting(Shader * lShader);
+        void runLighting(Light * light);
 
     public:
         GBuffer(GLFWwindow * window);
-        GBuffer& attach(Shader * lShader);
+        GBuffer& attach(Light * light);
         Shader * getShader();
         void engage();
         void disengage();
@@ -35,7 +36,7 @@ namespace XK {
     private:
         // Frame shaders
         Shader shader;
-        std::vector<Shader*> lightingShaders;
+        std::vector<Light*> lights;
         
         // Screen sizes
         GLint wWidth;
@@ -48,6 +49,7 @@ namespace XK {
         GLuint gPosition;
         GLuint gNormal;
         GLuint gColor;
+        GLuint gDepthTex;
         GLuint gDepth;
         GLuint attachments[3] = {
             GL_COLOR_ATTACHMENT0,

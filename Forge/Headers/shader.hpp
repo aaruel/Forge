@@ -40,6 +40,7 @@ namespace XK
         void bind(unsigned int location, float value);
         void bind(unsigned int location, int value);
         void bind(unsigned int location, glm::mat4 const & matrix);
+        void bind(unsigned int location, glm::vec3 const & vec);
         template<typename T> Shader & bind(std::string const & name, T&& value)
         {
             int location = glGetUniformLocation(mProgram, name.c_str());

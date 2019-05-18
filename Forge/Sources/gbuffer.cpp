@@ -10,6 +10,8 @@
 // System Headers
 #include <iostream>
 
+#include "shader.hpp"
+
 namespace XK {
     /// Public
     
@@ -47,9 +49,10 @@ namespace XK {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     
-    GBuffer& GBuffer::attach(Shader * lShader) {
-        lightingShaders.push_back(lShader);
+    GBuffer& GBuffer::attach(Light * light) {
+        lights.push_back(light);
         // Assign texture buffers to lighting shader
+        Shader * lShader = light->getShader();
         lShader->activate();
         lShader->bind("gPosition", 0);
         lShader->bind("gNormal", 1);
@@ -83,18 +86,7 @@ namespace XK {
     }
     
     void GBuffer::runLighting() {
-        // Ensure the depth buffer isn't overwritten
         glDepthMask(GL_FALSE);
-        for (Shader * shader : lightingShaders) {
-            runLighting(shader);
-        }
-        glDepthMask(GL_TRUE);
-    }
-    
-    /// Private
-    
-    void GBuffer::runLighting(Shader * lShader) {
-        lShader->activate();
         // Activate gbuffer textures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -102,6 +94,19 @@ namespace XK {
         glBindTexture(GL_TEXTURE_2D, gNormal);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, gColor);
+        for (Light * light : lights) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ONE, GL_ONE);
+            runLighting(light);
+            glDisable(GL_BLEND);
+        }
+        glDepthMask(GL_TRUE);
+    }
+    
+    /// Private
+    
+    void GBuffer::runLighting(Light * light) {
+        light->bind();
         // render to the camera plane
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

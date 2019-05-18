@@ -8,6 +8,7 @@
 #include "voxel.hpp"
 #include "console.hpp"
 #include "gbuffer.hpp"
+#include "light.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -49,9 +50,6 @@ int main() {
     
     Shader voxelShader;
     voxelShader.attach("voxel2.vert").attach("voxel2.frag").link();
-
-    Shader lighting;
-    lighting.attach("lighting.vert").attach("lighting.frag").link();
     
     // Instantiate camera
     Camera * camera = Camera::getInstance();
@@ -61,7 +59,10 @@ int main() {
     
     // Build gBuffer
     GBuffer gbuffer(mWindow);
-    gbuffer.attach(&lighting);
+    DirectionalLight dl;
+    PointLight pl;
+    AmbientLight al;
+    gbuffer.attach(&al).attach(&dl).attach(&pl);
     
     // Voxel meshing
     Voxel voxel(gbuffer.getShader());
@@ -70,7 +71,7 @@ int main() {
         .addTexture("SnowNormal", "snow/snow-normal.png")
         .addTexture("SSAO", "snow/snow-ao.png");
     
-    Mesh mesh(gbuffer.getShader(), "sportsCar/sportsCar.obj");
+    Mesh mesh(gbuffer.getShader(), "sponza/sponza.obj");
     
     // Text console
     // Console console;
@@ -87,14 +88,19 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        // Draw skybox first so the actual map doesn't clip
+        //skybox.draw();
+        
         // Step camera
         camera->update();
+        dl.setPosition(camera->getPosition());
+        pl.setPosition(camera->getPosition());
         
         // gbuffer framebuffer rendering
         gbuffer.engage();
         
             // Voxel rendering
-            voxel.render();
+            //voxel.render();
             mesh.draw();
         
         gbuffer.disengage();
@@ -103,11 +109,7 @@ int main() {
         gbuffer.runLighting();
         
         // Console rendering
-        // console.render();
         GUI::render();
-        
-        // Draw skybox first so the actual map doesn't clip
-        skybox.draw();
         
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
