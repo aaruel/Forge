@@ -11,8 +11,6 @@ uniform sampler2D gSpecular;
 uniform sampler2D gEmissive;
 
 void main() {
-    vec4 base = texture(gColor, TexCoords);
-    float ao = texture(gSpecular, TexCoords).a;
-    FragColor = base * ambientPower * ao;
+    vec4 base = texture(gEmissive, TexCoords);
+    FragColor = base;
 }
-

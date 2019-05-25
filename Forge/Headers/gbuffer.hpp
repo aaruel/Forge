@@ -51,12 +51,15 @@ namespace XK {
         GLuint gPosition;
         GLuint gNormal;
         GLuint gColor;
-        GLuint gDepthTex;
+        GLuint gSpecular;
+        GLuint gEmissive;
         GLuint gDepth;
-        GLuint attachments[3] = {
+        GLuint attachments[5] = {
             GL_COLOR_ATTACHMENT0,
             GL_COLOR_ATTACHMENT1,
-            GL_COLOR_ATTACHMENT2
+            GL_COLOR_ATTACHMENT2,
+            GL_COLOR_ATTACHMENT3,
+            GL_COLOR_ATTACHMENT4
         };
         
         // Rendering frame

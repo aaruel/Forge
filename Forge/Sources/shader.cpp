@@ -1,5 +1,6 @@
 // Local Headers
 #include "shader.hpp"
+#include "shadinclude.hpp"
 
 // Standard Headers
 #include <cassert>
@@ -32,9 +33,7 @@ namespace XK
         // Load GLSL Shader Source from File
         std::string path = PROJECT_SOURCE_DIR "/Shaders/" + filename;
         mPaths.push_back(filename);
-        std::ifstream fd(path);
-        auto src = std::string(std::istreambuf_iterator<char>(fd),
-                              (std::istreambuf_iterator<char>()));
+        auto src = Shadinclude::load(path);
 
         // Create a Shader Object
         const char * source = src.c_str();

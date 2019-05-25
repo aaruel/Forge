@@ -78,6 +78,12 @@ namespace XK {
         Camera * camera;
     };
     
+    class EmissiveLight : public Light {
+    public:
+        EmissiveLight() : Light("emissivelight") {}
+        virtual void bind();
+    };
+    
     class AmbientLight : public Light {
     public:
         AmbientLight() : Light("ambientlight") {}

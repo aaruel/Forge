@@ -20,6 +20,7 @@ namespace XK
         aiScene const * scene = loader.ReadFile(
             PROJECT_SOURCE_DIR "/Models/" + filename,
             aiProcessPreset_TargetRealtime_MaxQuality |
+            aiProcess_CalcTangentSpace                |
             aiProcess_OptimizeGraph                   |
             aiProcess_FlipUVs);
 
@@ -96,7 +97,7 @@ namespace XK
 
     void Mesh::draw(GLuint shader)
     {
-        unsigned int unit = 0, diffuse = 0, specular = 0, normals = 0;
+        unsigned int unit = 0, diffuse = 0, specular = 0, normals = 0, ambient = 0, emissive = 0, unknown = 0;
         for (auto &i : mSubMeshes)
             i->draw(shader);
         for (auto &i : mTextures)
@@ -105,11 +106,14 @@ namespace XK
                  if (i.second == "diffuse")  uniform += (diffuse++  > 0) ? std::to_string(diffuse)  : "";
             else if (i.second == "specular") uniform += (specular++ > 0) ? std::to_string(specular) : "";
             else if (i.second == "normals")  uniform += (normals++  > 0) ? std::to_string(normals)  : "";
-
+            else if (i.second == "ambient")  uniform += (ambient++  > 0) ? std::to_string(ambient)  : "";
+            else if (i.second == "emissive") uniform += (emissive++ > 0) ? std::to_string(emissive) : "";
+            else if (i.second == "unknown")  uniform += (unknown++  > 0) ? std::to_string(unknown)  : "";
+            //printf("%s %i\n", i.second.c_str(), i.first);
             // Bind Correct Textures and Vertex Array Before Drawing
             glActiveTexture(GL_TEXTURE0 + unit);
             glBindTexture(GL_TEXTURE_2D, i.first);
-            glUniform1f(glGetUniformLocation(shader, uniform.c_str()), ++unit);
+            glUniform1i(glGetUniformLocation(shader, uniform.c_str()), unit++);
         }
         // Apply shader uniforms
         GLint Umodel = glGetUniformLocation(shader, "model");
@@ -122,6 +126,7 @@ namespace XK
         glUniform3fv(Udiffuse, 1, &matprops.diffuseColor[0]);
         glUniform3fv(Uspecular, 1, &matprops.specularColor[0]);
         glUniform1fv(Ushininess, 1, &matprops.shininess);
+        if (mIndices.size() == 0) return;
         // Draw vertices
         glBindVertexArray(mVertexArray);
         // Runs shaders :)
@@ -169,9 +174,15 @@ namespace XK
         auto diffuse  = process(path, mat, aiTextureType_DIFFUSE);
         auto specular = process(path, mat, aiTextureType_SPECULAR);
         auto normals  = process(path, mat, aiTextureType_NORMALS);
+        auto ambient  = process(path, mat, aiTextureType_AMBIENT);
+        auto emissive = process(path, mat, aiTextureType_EMISSIVE);
+        auto unknown  = process(path, mat, aiTextureType_UNKNOWN);
         textures.insert(diffuse.begin(), diffuse.end());
         textures.insert(specular.begin(), specular.end());
         textures.insert(normals.begin(), normals.end());
+        textures.insert(ambient.begin(), ambient.end());
+        textures.insert(emissive.begin(), emissive.end());
+        textures.insert(unknown.begin(), unknown.end());
 
         // Create New Mesh Node
         mSubMeshes.push_back(std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures, mp)));
@@ -219,7 +230,10 @@ namespace XK
             stbi_image_free(image);
                  if (type == aiTextureType_DIFFUSE)  mode = "diffuse";
             else if (type == aiTextureType_SPECULAR) mode = "specular";
-            else if (type == aiTextureType_NORMALS) mode = "normals";
+            else if (type == aiTextureType_NORMALS)  mode = "normals";
+            else if (type == aiTextureType_AMBIENT)  mode = "ambient";
+            else if (type == aiTextureType_EMISSIVE) mode = "emissive";
+            else if (type == aiTextureType_UNKNOWN)  mode = "unknown";
             textures.insert(std::make_pair(texture, mode));
         }   return textures;
     }

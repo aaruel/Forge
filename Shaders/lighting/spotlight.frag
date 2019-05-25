@@ -1,4 +1,6 @@
 #version 410 core
+#include ../ext/cooktorrance.glsl
+#include ../ext/orennayar.glsl
 
 // how the heck do shadows work?
 // take each fragment and transform it to "shadow map space"
@@ -12,11 +14,13 @@ in vec2 TexCoords;
 uniform float aperture;
 uniform vec3 position;
 uniform vec3 direction;
+uniform vec3 camPos;
 uniform mat4 view;
 uniform mat4 projection;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gColor;
+uniform sampler2D gSpecular;
 uniform sampler2D shadowMap;
 
 float LinearizeDepth(float val) {
@@ -61,33 +65,32 @@ float getShadow(vec3 matPosition, vec3 normal) {
 
 void main() {
     vec4 base = texture(gColor, TexCoords);
-    float diffusePower = 0.5;
 
     // Get textures
     vec3 normal = normalize(texture(gNormal, TexCoords).rgb);
     vec3 matPosition = texture(gPosition, TexCoords).rgb;
-    vec3 viewDir = normalize(-matPosition);
+    float metallic = texture(gSpecular, TexCoords).g;
+    float roughness = texture(gSpecular, TexCoords).b;
+    float ao = texture(gSpecular, TexCoords).a;
     
     // Shadow transform
     float shadow = getShadow(matPosition, normal);
     
     // get angle from eye direction to frag position
-    vec3 matDirection = normalize(position - matPosition);
+    vec3 viewDirection = normalize(camPos - matPosition);
+    vec3 lightDirection = normalize(position - matPosition);
     vec3 nDirection = normalize(direction);
-    float angle = acos(max(dot(nDirection, -matDirection), 0.0));
-    
-    float lightDist = distance(position, matPosition);
-    float lightDist2 = lightDist * lightDist;
-    
-    float lighting = sqrt(diffusePower / (lightDist + lightDist2));
+    float angle = acos(max(dot(nDirection, -lightDirection), 0.0));
     
     // easing edges
     float limit = radians(aperture/2.f);
     float edge = 1 - smoothstep(limit - 0.1, limit, angle);
     
     // normal intensity
-    float normalAngle = max(dot(normal, matDirection), 0.0);
+    float specular = cookTorranceSpecular(lightDirection, viewDirection, normal, roughness, metallic);
+    float diffuse = orenNayarDiffuse(lightDirection, viewDirection, normal, roughness, 0.3);
     
-    FragColor = base * vec4(vec3(lighting), 1.0) * (1-shadow) * edge * normalAngle;
+    vec3 lighting = vec3((base) * (1.0-shadow) * edge * (specular + diffuse));
+    FragColor = vec4(lighting, 1.0);
 }
 

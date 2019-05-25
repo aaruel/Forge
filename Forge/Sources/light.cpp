@@ -99,24 +99,31 @@ namespace XK {
     }
     
     // DERIVED
+    // Emissive Light
+    
+    void EmissiveLight::bind() {
+        Light::bind();
+    }
+    
+    // DERIVED
     // Spot Light
     
     void SpotLight::bind() {
         Light::bind();
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, map);
         camera.render(shader.get());
         shader
             .bind("position", position)
             .bind("direction", direction)
             .bind("aperture", aperture)
-            .bind("shadowMap", 3);
+            .bind("shadowMap", 5);
     }
     
     void SpotLight::updateMatrices() {
         camera.setLocation(
             position, direction,
-            aperture, (float)width/(float)height, 0.1f, 100.f
+            aperture, (float)width/(float)height, 0.1f, 1000.f
         );
     }
     

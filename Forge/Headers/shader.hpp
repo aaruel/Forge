@@ -17,7 +17,6 @@ namespace XK
     class Shader
     {
         using Paths = std::vector<std::string>;
-        
     public:
     
         static std::vector<Shader*> getAllShaders();

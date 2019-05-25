@@ -56,16 +56,18 @@ int main() {
     Camera * camera = Camera::getInstance();
     
     // Instantiate skybox
-    //Skybox skybox("space/");
+    Skybox skybox("space/");
     
     // Build gBuffer
     GBuffer gbuffer(mWindow);
     AmbientLight al;
     SpotLight sl;
     DirectionalLight dl;
-    gbuffer.attach(&al).attach(&sl).attach(&dl);
+    EmissiveLight el;
+    gbuffer.attach(&al).attach(&el).attach(&sl);
     sl.setPosition(glm::vec3(0.f, 0.4, -3.f));
     sl.setDirection(glm::vec3(0.f, 0.f, 1.f));
+    dl.setDirection(glm::vec3(0.f, -1.f, 0.f));
     
     // Voxel meshing
     Voxel voxel(&defVox);
@@ -82,9 +84,11 @@ int main() {
     // GUI
     GUI::init(mWindow);
     
-    std::vector<Renderable*> objects = {&mesh, &voxel};
+    std::vector<Renderable*> objects = {&mesh};
     
     float mover = 0.0;
+    bool slFollowCam = true;
+    Input::getInstance()->registerKeyEvent(GLFW_KEY_9, [&slFollowCam](){slFollowCam = !slFollowCam;});
     
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -95,18 +99,19 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // Draw skybox first so the actual map doesn't clip
-        //skybox.draw();
-        
         // Step camera
         camera->update();
-        sl.setPosition(camera->getPosition());
-        sl.setDirection(camera->getEye());
-        dl.setDirection(camera->getEye());
+        
+        if (slFollowCam) {
+            sl.setPosition(camera->getPosition());
+            sl.setDirection(camera->getEye());
+        }
         
         // gbuffer framebuffer rendering
         gbuffer.engage();
         
+            // Draw skybox first so the actual map doesn't clip
+            //skybox.draw();
             Renderable::renderAll(&objects);
         
         gbuffer.disengage();

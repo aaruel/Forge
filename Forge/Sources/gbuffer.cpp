@@ -31,21 +31,27 @@ namespace XK {
         initTexture(&gColor, 2, [this](){
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, wWidth, wHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         });
+        initTexture(&gSpecular, 3, [this](){
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, wWidth, wHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        });
+        initTexture(&gEmissive, 4, [this](){
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, wWidth, wHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        });
         // Tell OpenGL the output locations of the fragment shader
-        glDrawBuffers(3, attachments);
+        glDrawBuffers(5, attachments);
         // Manually generate depth buffer into a *write only* renderbuffer for depth/stencil testing
         glGenRenderbuffers(1, &gDepth);
         glBindRenderbuffer(GL_RENDERBUFFER, gDepth);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, wWidth, wHeight);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gDepth);
         // Ensure framebuffer is finished
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            std::cout << "Framebuffer not complete!" << std::endl;
+        GLuint fbCompl = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fbCompl != GL_FRAMEBUFFER_COMPLETE) {
+            std::cout << "Framebuffer not complete! " << fbCompl << std::endl;
         }
         // Init render
         initCameraPlane();
         // Generate shader
-        //shader.attach("std.deferred.vert").attach("std.deferred.frag").link();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     
@@ -57,6 +63,8 @@ namespace XK {
         lShader->bind("gPosition", 0);
         lShader->bind("gNormal", 1);
         lShader->bind("gColor", 2);
+        lShader->bind("gSpecular", 3);
+        lShader->bind("gEmissive", 4);
         return *this;
     }
 
@@ -94,6 +102,10 @@ namespace XK {
         glBindTexture(GL_TEXTURE_2D, gNormal);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, gColor);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, gSpecular);
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, gEmissive);
         for (Light * light : lights) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE, GL_ONE);

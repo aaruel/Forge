@@ -8,6 +8,7 @@ uniform vec3 direction;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gColor;
+uniform sampler2D gSpecular;
 
 
 void main() {
