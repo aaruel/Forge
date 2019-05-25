@@ -10,6 +10,7 @@
 
 #include "shader.hpp"
 #include "camera.hpp"
+#include "renderable.hpp"
 
 // System Headers
 #include <PolyVox/CubicSurfaceExtractor.h>
@@ -40,11 +41,11 @@ namespace XK {
     
     struct Texture {
         GLuint buffer;
-        int unit;
+        GLint unit;
         std::string location;
     };
 
-    class Voxel {
+    class Voxel : public Renderable {
     private:
         void createSphereInVolume(PolyVox::RawVolume<PolyVox::MaterialDensityPair88>& volData, float fRadius, uint8_t uValue);
         
@@ -74,7 +75,7 @@ namespace XK {
         Voxel(Shader * shader);
         ~Voxel();
         
-        void render();
+        virtual void render();
         bool getVoxelFromEye(PolyVox::Vector3DInt32 & result, bool adjacent = true);
         // Builder pattern texture adding
         Voxel & addTexture(std::string texLocation, std::string filename);
@@ -83,8 +84,6 @@ namespace XK {
     
         PolyVox::PagedVolume<PolyVox::MaterialDensityPair88> * volumes;
         OpenGLMeshData mData;
-        Shader * mShader;
-        Camera * mCamera;
         
         /// Multithreading volume to mesh decoding
         bool expectMesher = false;

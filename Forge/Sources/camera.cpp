@@ -24,6 +24,8 @@ Camera * Camera::getInstance() {
 
 Camera::Camera(Input * _input) : input(_input) {}
 
+Camera::Camera() { controllable = false; }
+
 void Camera::render(GLint shader) {
     // Projection indicates the far and near frutsum planes, and warping
     // View is the position of the camera, the view direction, and the Z angle
@@ -42,8 +44,11 @@ void Camera::translate(glm::vec3 amount) {
 }
 
 void Camera::update() {
-    processMouse();
-    processKeys();
+    if (controllable) {
+        processMouse();
+        processKeys();
+    }
+    
     reloadView();
 }
 

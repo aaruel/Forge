@@ -11,6 +11,7 @@
 // Local Headers
 #include "shader.hpp"
 #include "light.hpp"
+#include "renderable.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -32,6 +33,7 @@ namespace XK {
         void engage();
         void disengage();
         void runLighting();
+        void createShadowMaps(Pipeline * objects);
 
     private:
         // Frame shaders

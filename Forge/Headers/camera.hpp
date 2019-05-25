@@ -15,8 +15,14 @@
 #include "input.hpp"
 
 class Camera {
+private:
+    void reloadView();
+    void processMouse();
+    void processKeys();
+
 public:
     // Public methods
+    Camera();
     Camera(Input * _input);
     void render(GLint shader);
     void translate(glm::vec3 amount);
@@ -26,13 +32,23 @@ public:
     glm::vec3 getPosition() { return position; }
     glm::vec3 getEye() { return eye; }
     
+    // Setters
+    void setLocation(
+        glm::vec3 pos, glm::vec3 dir,
+        float fov, float aspect, float nplane, float fplane
+    ) {
+        position = pos;
+        eye = dir;
+        proj = glm::perspective(glm::radians(fov), aspect, nplane, fplane);
+        update();
+    }
+    
     static Camera * getInstance();
     
 private:
-    void reloadView();
-    void processMouse();
-    void processKeys();
-    
+    // Camera flags
+    bool controllable = true;
+
     // Input driver
     Input * input;
     

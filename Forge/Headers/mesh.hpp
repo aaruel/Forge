@@ -4,6 +4,7 @@
 
 #include "camera.hpp"
 #include "shader.hpp"
+#include "renderable.hpp"
 
 // System Headers
 #include <assimp/importer.hpp>
@@ -26,9 +27,11 @@ namespace XK
         glm::vec3 position;
         glm::vec3 normal;
         glm::vec2 uv;
+        glm::vec3 tangent;
+        glm::vec3 bitangent;
     };
 
-    class Mesh
+    class Mesh : public Renderable
     {
     private:
     
@@ -54,7 +57,7 @@ namespace XK
              MatProps _matprops);
 
         // Public Member Functions
-        void draw();
+        virtual void render();
         void draw(GLuint shader);
         void translate(glm::vec3 coords);
         glm::mat4 & getModel();
@@ -77,10 +80,10 @@ namespace XK
         std::vector<std::unique_ptr<Mesh>> mSubMeshes;
         std::vector<GLuint> mIndices;
         std::vector<Vertex> mVertices;
+        std::vector<Vertex> mTangents;
+        std::vector<Vertex> mBitangents;
         std::map<GLuint, std::string> mTextures;
         glm::mat4 modelMatrix = glm::mat4(1.0f);
-        Camera * mCamera;
-        Shader * mShader;
 
         // Private Member Variables
         GLuint mVertexArray;

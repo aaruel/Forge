@@ -18,7 +18,9 @@ namespace XK {
     /// Public ///
     //////////////
 
-    Voxel::Voxel(Shader * shader) : mShader(shader), mCamera(Camera::getInstance()) {
+    Voxel::Voxel(Shader * shader) {
+        mShader = shader;
+        mCamera = Camera::getInstance();
         auto * pager = new FastNoisePager<MaterialDensityPair88>();
         
         // Generate volumetric mesh

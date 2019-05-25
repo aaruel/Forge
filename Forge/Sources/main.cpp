@@ -17,6 +17,7 @@
 // Standard Headers
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
 
 using namespace XK;
 
@@ -41,43 +42,49 @@ int main() {
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
     //glEnable(GL_FRAMEBUFFER_SRGB);
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
     
-    // Build shader
-    Shader shader;
-    shader.attach("main.vert").attach("main.frag").link();
-    
-    Shader voxelShader;
-    voxelShader.attach("voxel2.vert").attach("voxel2.frag").link();
+    // Build shaders
+    Shader defMesh;
+    defMesh.attach("deferred/mesh.vert").attach("deferred/mesh.frag").link();
+    Shader defVox;
+    defVox.attach("deferred/voxel.vert").attach("deferred/voxel.frag").link();
     
     // Instantiate camera
     Camera * camera = Camera::getInstance();
     
     // Instantiate skybox
-    Skybox skybox("space/");
+    //Skybox skybox("space/");
     
     // Build gBuffer
     GBuffer gbuffer(mWindow);
-    DirectionalLight dl;
-    PointLight pl;
     AmbientLight al;
-    gbuffer.attach(&al).attach(&dl).attach(&pl);
+    SpotLight sl;
+    DirectionalLight dl;
+    gbuffer.attach(&al).attach(&sl).attach(&dl);
+    sl.setPosition(glm::vec3(0.f, 0.4, -3.f));
+    sl.setDirection(glm::vec3(0.f, 0.f, 1.f));
     
     // Voxel meshing
-    Voxel voxel(gbuffer.getShader());
+    Voxel voxel(&defVox);
     voxel
         .addTexture("texture_diffuse", "snow/snow-base.png")
-        .addTexture("SnowNormal", "snow/snow-normal.png")
+        .addTexture("normals", "snow/snow-normal.png")
         .addTexture("SSAO", "snow/snow-ao.png");
     
-    Mesh mesh(gbuffer.getShader(), "sponza/sponza.obj");
+    Mesh mesh(&defMesh, "helmet/DamagedHelmet.gltf");
     
     // Text console
     // Console console;
     
     // GUI
     GUI::init(mWindow);
+    
+    std::vector<Renderable*> objects = {&mesh, &voxel};
+    
+    float mover = 0.0;
     
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -93,17 +100,18 @@ int main() {
         
         // Step camera
         camera->update();
-        dl.setPosition(camera->getPosition());
-        pl.setPosition(camera->getPosition());
+        sl.setPosition(camera->getPosition());
+        sl.setDirection(camera->getEye());
+        dl.setDirection(camera->getEye());
         
         // gbuffer framebuffer rendering
         gbuffer.engage();
         
-            // Voxel rendering
-            //voxel.render();
-            mesh.draw();
+            Renderable::renderAll(&objects);
         
         gbuffer.disengage();
+        
+        gbuffer.createShadowMaps(&objects);
         
         // lighting pass
         gbuffer.runLighting();
@@ -114,6 +122,7 @@ int main() {
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
+        mover += 0.01;
     }   glfwTerminate();
     XK::GUI::destroy();
     return EXIT_SUCCESS;

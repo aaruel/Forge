@@ -60,9 +60,13 @@ namespace XK
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, position));
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, normal));
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, uv));
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, tangent));
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, bitangent));
         glEnableVertexAttribArray(0); // Vertex Positions
         glEnableVertexAttribArray(1); // Vertex Normals
         glEnableVertexAttribArray(2); // Vertex UVs
+        glEnableVertexAttribArray(3); // Vertex Tangents
+        glEnableVertexAttribArray(4); // Vertex Bitangents
 
         // Cleanup Buffers
         glBindVertexArray(0);
@@ -80,7 +84,7 @@ namespace XK
         return modelMatrix;
     }
 
-    void Mesh::draw() {
+    void Mesh::render() {
         // Make sure the drawing shader is correct
         mShader->activate();
         unsigned shader = mShader->get();
@@ -92,7 +96,7 @@ namespace XK
 
     void Mesh::draw(GLuint shader)
     {
-        unsigned int unit = 0, diffuse = 0, specular = 0;
+        unsigned int unit = 0, diffuse = 0, specular = 0, normals = 0;
         for (auto &i : mSubMeshes)
             i->draw(shader);
         for (auto &i : mTextures)
@@ -100,6 +104,7 @@ namespace XK
             std::string uniform = i.second;
                  if (i.second == "diffuse")  uniform += (diffuse++  > 0) ? std::to_string(diffuse)  : "";
             else if (i.second == "specular") uniform += (specular++ > 0) ? std::to_string(specular) : "";
+            else if (i.second == "normals")  uniform += (normals++  > 0) ? std::to_string(normals)  : "";
 
             // Bind Correct Textures and Vertex Array Before Drawing
             glActiveTexture(GL_TEXTURE0 + unit);
@@ -140,6 +145,8 @@ namespace XK
             vertex.uv       = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
             vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
             vertex.normal   = glm::vec3(mesh->mNormals[i].x,  mesh->mNormals[i].y,  mesh->mNormals[i].z);
+            vertex.tangent  = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+            vertex.bitangent= glm::vec3(mesh->mBitangents[i].x,mesh->mBitangents[i].y,mesh->mBitangents[i].z);
             vertices.push_back(vertex);
         }
 
@@ -159,10 +166,12 @@ namespace XK
 
         // Load Mesh Textures into VRAM
         std::map<GLuint, std::string> textures;
-        auto diffuse  = process(path, scene->mMaterials[mesh->mMaterialIndex], aiTextureType_DIFFUSE);
-        auto specular = process(path, scene->mMaterials[mesh->mMaterialIndex], aiTextureType_SPECULAR);
+        auto diffuse  = process(path, mat, aiTextureType_DIFFUSE);
+        auto specular = process(path, mat, aiTextureType_SPECULAR);
+        auto normals  = process(path, mat, aiTextureType_NORMALS);
         textures.insert(diffuse.begin(), diffuse.end());
         textures.insert(specular.begin(), specular.end());
+        textures.insert(normals.begin(), normals.end());
 
         // Create New Mesh Node
         mSubMeshes.push_back(std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures, mp)));
@@ -210,6 +219,7 @@ namespace XK
             stbi_image_free(image);
                  if (type == aiTextureType_DIFFUSE)  mode = "diffuse";
             else if (type == aiTextureType_SPECULAR) mode = "specular";
+            else if (type == aiTextureType_NORMALS) mode = "normals";
             textures.insert(std::make_pair(texture, mode));
         }   return textures;
     }

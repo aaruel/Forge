@@ -33,10 +33,10 @@ namespace XK {
         });
         // Tell OpenGL the output locations of the fragment shader
         glDrawBuffers(3, attachments);
-        // Manually generate depth buffer
+        // Manually generate depth buffer into a *write only* renderbuffer for depth/stencil testing
         glGenRenderbuffers(1, &gDepth);
         glBindRenderbuffer(GL_RENDERBUFFER, gDepth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, wWidth, wHeight);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, wWidth, wHeight);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gDepth);
         // Ensure framebuffer is finished
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -45,7 +45,7 @@ namespace XK {
         // Init render
         initCameraPlane();
         // Generate shader
-        shader.attach("std.deferred.vert").attach("std.deferred.frag").link();
+        //shader.attach("std.deferred.vert").attach("std.deferred.frag").link();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     
@@ -101,6 +101,14 @@ namespace XK {
             glDisable(GL_BLEND);
         }
         glDepthMask(GL_TRUE);
+    }
+    
+    void GBuffer::createShadowMaps(Pipeline * objects) {
+        for (Light * light : lights) {
+            // will return a nullptr if not a ShadowCaster
+            ShadowCaster * scl = dynamic_cast<ShadowCaster*>(light);
+            if (scl) scl->shadowPass(objects);
+        }
     }
     
     /// Private

@@ -4,7 +4,6 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform vec3 position;
-uniform vec3 viewDir;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gColor;
@@ -16,7 +15,7 @@ void main() {
     // Get textures
     vec3 normal = normalize(texture(gNormal, TexCoords).rgb);
     vec3 matPosition = texture(gPosition, TexCoords).rgb;
-    vec3 viewDir0 = normalize(-matPosition);
+    vec3 viewDir = normalize(-matPosition);
     
     // Get light direction and distance
     vec3 lightDirection = normalize(position - matPosition);
@@ -30,7 +29,7 @@ void main() {
     diffuse = diffuse * diffusePower / dist;
     
     // get half vector
-    vec3 halfVec = normalize(lightDirection + viewDir0);
+    vec3 halfVec = normalize(lightDirection + viewDir);
     
     // Specular light calculation
     float specular = pow(max(dot(halfVec, normal), 0.0), 16) / dist;

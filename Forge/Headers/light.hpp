@@ -16,6 +16,8 @@
 #include <glm/glm.hpp>
 #include "shader.hpp"
 #include "camera.hpp"
+#include "input.hpp"
+#include "renderable.hpp"
 
 namespace XK {
     class Light {
@@ -23,7 +25,7 @@ namespace XK {
         Light(std::string name, glm::vec3 _position = glm::vec3(0.0));
         
         virtual void bind();
-        void setPosition(glm::vec3 _position);
+        virtual void setPosition(glm::vec3 _position);
         Shader * getShader();
         
     protected:
@@ -34,10 +36,36 @@ namespace XK {
         
     };
     
+    class ShadowCaster {
+    public:
+        ShadowCaster();
+    
+        virtual void shadowPass(Pipeline * objects) = 0;
+        
+    protected:
+        // Shadow map resolution
+        GLint height = 1024, width = 1024;
+        GLint fbWidth, fbHeight;
+        
+        // GL components
+        GLuint framebuffer;
+        GLuint map;
+        
+        // For adjusting the viewport
+        GLFWwindow * window;
+        
+        // Shadow depth shader
+        Shader shadowShader;
+    };
+    
     class DirectionalLight : public Light {
     public:
         DirectionalLight() : Light("directionallight") {}
         virtual void bind();
+        void setDirection(glm::vec3 d) { direction = d; }
+        
+    private:
+        glm::vec3 direction;
     };
     
     class PointLight : public Light {
@@ -58,6 +86,29 @@ namespace XK {
         
     private:
         float ambientPower = 0.1;
+    };
+    
+    class SpotLight : public Light, public ShadowCaster {
+    private:
+        void updateMatrices();
+        
+    public:
+    
+        SpotLight() : Light("spotlight"), ShadowCaster() { updateMatrices(); }
+        virtual void bind();
+        virtual void setPosition(glm::vec3 p) { position = p; updateMatrices(); }
+        void setDirection(glm::vec3 d) { direction = d; updateMatrices(); }
+        void setAperture(float degrees) { aperture = degrees; updateMatrices(); }
+        virtual void shadowPass(Pipeline * objects);
+    
+    private:
+        glm::vec3 direction;
+        float aperture = 30; // degrees
+        
+        // Shadow pass matrices
+        Camera camera;
+//        glm::mat4 view;
+//        glm::mat4 projection;
     };
 }
 

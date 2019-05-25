@@ -17,5 +17,5 @@ void main() {
     // also store the per-fragment normals into the gbuffer
     gNormal = normalize(Normal);
     // and the diffuse per-fragment color
-    gColor = texture(texture_diffuse, TexCoords);
+    gColor = texture(texture_diffuse, FragPos.xz);
 }
