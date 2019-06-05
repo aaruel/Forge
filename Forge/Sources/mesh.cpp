@@ -6,15 +6,18 @@
 
 // System Headers
 #include <stb_image.h>
+#include <glm/gtx/string_cast.hpp>
 
 // Define Namespace
 namespace XK
 {
-    Mesh::Mesh(Shader * shader, std::string const & filename) : Mesh()
+    Mesh::Mesh(kgr::container * container, Shader * shader, std::string const & filename) : Mesh()
     {
         // Dependecy inject the camera and shader
+        mContainer = container;
         mShader = shader;
         mCamera = Camera::getInstance();
+        mSkybox = &mContainer->service<SkyboxService>();
         // Load a Model from File
         Assimp::Importer loader;
         aiScene const * scene = loader.ReadFile(
@@ -30,59 +33,32 @@ namespace XK
         else parse(filename.substr(0, index), scene->mRootNode, scene);
     }
 
-    Mesh::Mesh(std::vector<Vertex> const & vertices,
+    Mesh::Mesh(std::vector<TVertex> const & vertices,
                std::vector<GLuint> const & indices,
-               std::map<GLuint, std::string> const & textures,
-               MatProps _matprops)
+               std::map<GLuint, std::string> const & textures)
                     : mIndices(indices)
                     , mVertices(vertices)
                     , mTextures(textures)
-                    , matprops(_matprops)
     {
-        // Bind a Vertex Array Object
-        glGenVertexArrays(1, & mVertexArray);
-        glBindVertexArray(mVertexArray);
-
-        // Copy Vertex Buffer Data
-        glGenBuffers(1, & mVertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER,
-                     mVertices.size() * sizeof(Vertex),
-                   & mVertices.front(), GL_STATIC_DRAW);
-
-        // Copy Index Buffer Data
-        glGenBuffers(1, & mElementBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mElementBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     mIndices.size() * sizeof(GLuint),
-                   & mIndices.front(), GL_STATIC_DRAW);
-
-        // Set Shader Attributes
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, position));
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, normal));
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, uv));
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, tangent));
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, bitangent));
-        glEnableVertexAttribArray(0); // Vertex Positions
-        glEnableVertexAttribArray(1); // Vertex Normals
-        glEnableVertexAttribArray(2); // Vertex UVs
-        glEnableVertexAttribArray(3); // Vertex Tangents
-        glEnableVertexAttribArray(4); // Vertex Bitangents
-
-        // Cleanup Buffers
-        glBindVertexArray(0);
-        glDeleteBuffers(1, & mVertexBuffer);
-        glDeleteBuffers(1, & mElementBuffer);
+        mRP.vertices = mVertices;
+        mRP.indices = mIndices;
+        uploadToGPU(&mRP);
     }
     
     void Mesh::translate(glm::vec3 coords) {
-        modelMatrix = glm::translate(modelMatrix, coords);
+        Renderable::translate(coords);
         for (auto &i : mSubMeshes)
             i->translate(coords);
     }
     
+    void Mesh::rotate(glm::quat rot) {
+        Renderable::rotate(rot);
+        for (auto &i : mSubMeshes)
+            i->rotate(rot);
+    }
+    
     glm::mat4 & Mesh::getModel() {
-        return modelMatrix;
+        return mModel;
     }
 
     void Mesh::render() {
@@ -91,6 +67,10 @@ namespace XK
         unsigned shader = mShader->get();
         // Passes view/projection to the mesh shader
         mCamera->render(shader);
+        // Pass skybox for reflection
+        glActiveTexture(GL_TEXTURE31);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mSkybox->getTextureId());
+        glUniform1i(glGetUniformLocation(shader, "cubemap"), 31);
         // Pass to recursive function
         draw(shader);
     }
@@ -117,20 +97,12 @@ namespace XK
         }
         // Apply shader uniforms
         GLint Umodel = glGetUniformLocation(shader, "model");
-        GLint Uambient = glGetUniformLocation(shader, "Material.Ka");
-        GLint Udiffuse = glGetUniformLocation(shader, "Material.Kd");
-        GLint Uspecular = glGetUniformLocation(shader, "Material.Ks");
-        GLint Ushininess = glGetUniformLocation(shader, "Material.Shininess");
-        glUniformMatrix4fv(Umodel, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-        glUniform3fv(Uambient, 1, &matprops.ambientColor[0]);
-        glUniform3fv(Udiffuse, 1, &matprops.diffuseColor[0]);
-        glUniform3fv(Uspecular, 1, &matprops.specularColor[0]);
-        glUniform1fv(Ushininess, 1, &matprops.shininess);
+        glUniformMatrix4fv(Umodel, 1, GL_FALSE, glm::value_ptr(mModel));
         if (mIndices.size() == 0) return;
         // Draw vertices
-        glBindVertexArray(mVertexArray);
+        glBindVertexArray(mVAO);
         // Runs shaders :)
-        glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, nullptr);
     }
 
     void Mesh::parse(std::string const & path, aiNode const * node, aiScene const * scene)
@@ -144,14 +116,24 @@ namespace XK
     void Mesh::parse(std::string const & path, aiMesh const * mesh, aiScene const * scene)
     {
         // Create Vertex Data from Mesh Node
-        std::vector<Vertex> vertices; Vertex vertex;
-        for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-        {   if (mesh->mTextureCoords[0])
-            vertex.uv       = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-            vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
-            vertex.normal   = glm::vec3(mesh->mNormals[i].x,  mesh->mNormals[i].y,  mesh->mNormals[i].z);
-            vertex.tangent  = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-            vertex.bitangent= glm::vec3(mesh->mBitangents[i].x,mesh->mBitangents[i].y,mesh->mBitangents[i].z);
+        std::vector<TVertex> vertices; TVertex vertex;
+        for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        if (mesh->mTextureCoords[0])
+            std::get<uv>(vertex) = glm::vec2(
+                mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y
+            );
+            std::get<position>(vertex) = glm::vec3(
+                mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z
+            );
+            std::get<normal>(vertex) = glm::vec3(
+                mesh->mNormals[i].x,  mesh->mNormals[i].y,  mesh->mNormals[i].z
+            );
+            std::get<tangent>(vertex) = glm::vec3(
+                mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z
+            );
+            std::get<bitangent>(vertex) = glm::vec3(
+                mesh->mBitangents[i].x,mesh->mBitangents[i].y,mesh->mBitangents[i].z
+            );
             vertices.push_back(vertex);
         }
 
@@ -162,12 +144,7 @@ namespace XK
             indices.push_back(mesh->mFaces[i].mIndices[j]);
 
         // Load material properties
-        MatProps mp;
         aiMaterial * mat = scene->mMaterials[mesh->mMaterialIndex];
-        mat->Get(AI_MATKEY_COLOR_AMBIENT, mp.ambientColor);
-        mat->Get(AI_MATKEY_COLOR_DIFFUSE, mp.diffuseColor);
-        mat->Get(AI_MATKEY_COLOR_SPECULAR, mp.specularColor);
-        mat->Get(AI_MATKEY_SHININESS, mp.shininess);
 
         // Load Mesh Textures into VRAM
         std::map<GLuint, std::string> textures;
@@ -185,7 +162,7 @@ namespace XK
         textures.insert(unknown.begin(), unknown.end());
 
         // Create New Mesh Node
-        mSubMeshes.push_back(std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures, mp)));
+        mSubMeshes.push_back(std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures)));
     }
 
     std::map<GLuint, std::string> Mesh::process(std::string const & path,

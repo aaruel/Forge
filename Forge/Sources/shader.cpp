@@ -31,7 +31,7 @@ namespace XK
     Shader & Shader::attach(std::string const & filename)
     {
         // Load GLSL Shader Source from File
-        std::string path = PROJECT_SOURCE_DIR "/Shaders/" + filename;
+        std::string path = PROJECT_SOURCE_DIR "/Forge/Shaders/" + filename;
         mPaths.push_back(filename);
         auto src = Shadinclude::load(path);
 

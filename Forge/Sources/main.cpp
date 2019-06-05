@@ -9,10 +9,13 @@
 #include "console.hpp"
 #include "gbuffer.hpp"
 #include "light.hpp"
+#include "gui.hpp"
+#include "voxelscape.hpp"
 
 // System Headers
 #include <glad/glad.h>
-#include "gui.hpp"
+#include <kangaru/kangaru.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 // Standard Headers
 #include <cstdio>
@@ -49,14 +52,16 @@ int main() {
     // Build shaders
     Shader defMesh;
     defMesh.attach("deferred/mesh.vert").attach("deferred/mesh.frag").link();
-    Shader defVox;
-    defVox.attach("deferred/voxel.vert").attach("deferred/voxel.frag").link();
+    
+    Voxelscape<VoxelPlane> vs;
     
     // Instantiate camera
     Camera * camera = Camera::getInstance();
     
     // Instantiate skybox
-    Skybox skybox("space/");
+    kgr::container container;
+    container.emplace<SkyboxService>("ocean/");
+    Skybox& skybox = container.service<SkyboxService>();
     
     // Build gBuffer
     GBuffer gbuffer(mWindow);
@@ -64,19 +69,19 @@ int main() {
     SpotLight sl;
     DirectionalLight dl;
     EmissiveLight el;
-    gbuffer.attach(&al).attach(&el).attach(&sl);
+    gbuffer.attach(&al).attach(&el).attach(&dl).attach(&sl);
     sl.setPosition(glm::vec3(0.f, 0.4, -3.f));
     sl.setDirection(glm::vec3(0.f, 0.f, 1.f));
     dl.setDirection(glm::vec3(0.f, -1.f, 0.f));
     
     // Voxel meshing
-    Voxel voxel(&defVox);
-    voxel
-        .addTexture("texture_diffuse", "snow/snow-base.png")
-        .addTexture("normals", "snow/snow-normal.png")
-        .addTexture("SSAO", "snow/snow-ao.png");
+//    Voxel voxel(&defVox);
+//    voxel
+//        .addTexture("texture_diffuse", "snow/snow-base.png")
+//        .addTexture("normals", "snow/snow-normal.png")
+//        .addTexture("SSAO", "snow/snow-ao.png");
     
-    Mesh mesh(&defMesh, "helmet/DamagedHelmet.gltf");
+    Mesh mesh(&container, &defMesh, "helmet/DamagedHelmet.gltf");
     
     // Text console
     // Console console;
@@ -84,9 +89,11 @@ int main() {
     // GUI
     GUI::init(mWindow);
     
-    std::vector<Renderable*> objects = {&mesh};
+    Pipeline objects = {&mesh, &vs};
     
     float mover = 0.0;
+    glm::quat q = glm::angleAxis(glm::radians(90.f), glm::vec3(1.0, 0.0, 0.0));
+    mesh.rotate(q);
     bool slFollowCam = true;
     Input::getInstance()->registerKeyEvent(GLFW_KEY_9, [&slFollowCam](){slFollowCam = !slFollowCam;});
     
@@ -111,15 +118,17 @@ int main() {
         gbuffer.engage();
         
             // Draw skybox first so the actual map doesn't clip
-            //skybox.draw();
+            skybox.draw();
             Renderable::renderAll(&objects);
         
         gbuffer.disengage();
         
         gbuffer.createShadowMaps(&objects);
         
+        //glEnable(GL_FRAMEBUFFER_SRGB);
         // lighting pass
         gbuffer.runLighting();
+        //glDisable(GL_FRAMEBUFFER_SRGB);
         
         // Console rendering
         GUI::render();

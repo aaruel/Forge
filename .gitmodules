@@ -56,3 +56,7 @@
 	path = Forge/Vendor/kangaru
 	url = https://github.com/gracicot/kangaru.git
 	branch = master
+[submodule "Forge/Vendor/voxels"]
+	path = Forge/Vendor/voxels
+	url = https://github.com/aaruel/voxels
+	branch = xplatform

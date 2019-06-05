@@ -2,6 +2,13 @@
 
 #include beckmann.glsl
 
+float D_GGX(in float roughness, in float NdH) {
+    float m = roughness * roughness;
+    float m2 = m * m;
+    float d = (NdH * m2 - NdH) * NdH + 1.0;
+    return m2 / (PI * d * d);
+}
+
 float cookTorranceSpecular(
   vec3 lightDirection,
   vec3 viewDirection,
@@ -22,7 +29,7 @@ float cookTorranceSpecular(
   float G = min(1.0, min(x * VdotN, x * LdotN));
 
   //Distribution term
-  float D = beckmannDistribution(NdotH, roughness);
+  float D = D_GGX(roughness, NdotH);
 
   //Fresnel term
   float F = pow(1.0 - VdotN, fresnel);

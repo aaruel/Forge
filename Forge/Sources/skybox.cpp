@@ -31,19 +31,19 @@ namespace XK {
         glEnableVertexAttribArray(0); // Vertex Positions
     }
 
-    Skybox::Skybox(std::string const & filename) : camera(Camera::getInstance()) {
+    Skybox::Skybox(std::string const & filename, std::string const & ext) : camera(Camera::getInstance()) {
         loadVerts();
     
         // Mostly obtained through https://learnopengl.com/Advanced-OpenGL/Cubemaps
         const int nFaces = 6;
         std::string location = PROJECT_SOURCE_DIR "/Skybox/" + filename;
         std::string faces[nFaces] = {
-            "right.jpg",
-            "left.jpg",
-            "top.jpg",
-            "bottom.jpg",
-            "front.jpg",
-            "back.jpg"
+            "right."+ext,
+            "left."+ext,
+            "top."+ext,
+            "bottom."+ext,
+            "front."+ext,
+            "back."+ext
         };
         
         // Generate and load texture buffer
@@ -80,8 +80,10 @@ namespace XK {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         
         // Load shader
-        shader.attach("skybox.vert").attach("skybox.frag").link();
+        shader.attach("deferred/skybox.vert").attach("deferred/skybox.frag").link();
     }
+    
+    GLuint Skybox::getTextureId() { return textureId; }
     
     void Skybox::draw() {
         glDepthMask(GL_FALSE);

@@ -14,6 +14,7 @@
 // System Headers
 #include <glad/glad.h>
 #include <iostream>
+#include <kangaru/kangaru.hpp>
 
 #define N_SKYBOX_VERTS 108
 
@@ -70,13 +71,15 @@ namespace XK {
         unsigned int skyboxBuffer;
     
     public:
-        Skybox(std::string const & filepath);
-        
+        Skybox(std::string const & filepath, std::string const & ext = "jpg");
         void draw();
+        GLuint getTextureId();
         
     private:
         void loadVerts();
     };
+    
+    struct SkyboxService : kgr::single_service<Skybox>, kgr::supplied {};
 }
 
 #endif /* skybox_h */

@@ -22,11 +22,14 @@ uniform sampler2D unknown;
 uniform sampler2D normals;
 uniform sampler2D ambient;
 uniform sampler2D emissive;
+uniform samplerCube cubemap;
+uniform vec3 camPos;
 
 uniform mat4 view;
 uniform mat4 model;
 
 void main() {
+    float metallic = texture(unknown, TexCoords).g;
     // store the fragment position vector in the first gbuffer texture
     gPosition = FragPos;
     // also store the per-fragment normals into the gbuffer
@@ -37,7 +40,9 @@ void main() {
     );
     gNormal = (texture(normals, TexCoords).rgb * 2.0 - 1.0) * tangentToWorld;
     // and the diffuse per-fragment color
-    gColor = texture(diffuse2, TexCoords);
+    vec3 I = normalize(FragPos - camPos);
+    vec3 R = reflect(I, normalize(gNormal));
+    gColor = mix(texture(cubemap, R), texture(diffuse2, TexCoords), metallic);
     // Beyond here is material properties
     gSpecular = vec4(
         texture(unknown, TexCoords).rgb,

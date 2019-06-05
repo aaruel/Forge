@@ -8,6 +8,8 @@ set(CMAKE_CXX_FLAGS "-std=c++17")
 set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 ${CMAKE_EXE_LINKER_FLAGS}" )
 set ( CMAKE_SHARED_LINKER_FLAGS "-image_base 7fff04c4a000" ${CMAKE_SHARED_LINKER_FLAGS})
 
+add_subdirectory(Forge/Vendor/voxels)
+
 set(CMAKE_MACOSX_RPATH 1)
 add_subdirectory(Forge/Vendor/luajit)
 
@@ -33,7 +35,7 @@ add_subdirectory(Forge/Vendor/libnoise)
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -std=c++17")
     if(NOT WIN32)
         set(GLAD_LIBRARIES dl)
     endif()
@@ -53,16 +55,18 @@ include_directories(Forge/Headers/
                     Forge/Vendor/nuklear/
                     Forge/Vendor/sol2/single/
                     Forge/Vendor/luajit/src/
-                    Forge/Vendor/kangaru/include/)
+                    Forge/Vendor/kangaru/include/
+                    Forge/Vendor/voxels/include/)
 
 file(GLOB VENDORS_SOURCES Forge/Vendor/glad/src/glad.c
                           Forge/Vendor/fastnoise/FastNoise.cpp)
 file(GLOB PROJECT_HEADERS Forge/Headers/*.hpp)
 file(GLOB PROJECT_SOURCES Forge/Sources/*.cpp)
-file(GLOB PROJECT_SHADERS Forge/Shaders/*.comp
-                          Forge/Shaders/*.frag
-                          Forge/Shaders/*.geom
-                          Forge/Shaders/*.vert)
+file(GLOB PROJECT_SHADERS Forge/Shaders/**/*.comp
+                          Forge/Shaders/**/*.glsl
+                          Forge/Shaders/**/*.frag
+                          Forge/Shaders/**/*.geom
+                          Forge/Shaders/**/*.vert)
 file(GLOB PROJECT_CONFIGS CMakeLists.txt
                           Readme.md
                          .gitattributes
@@ -82,6 +86,6 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS}
 target_link_libraries(${PROJECT_NAME} assimp glfw liblua
                       ${GLFW_LIBRARIES} ${GLAD_LIBRARIES}
                       BulletDynamics BulletCollision LinearMath 
-                      libnoise)
+                      libnoise voxels)
 set_target_properties(${PROJECT_NAME} PROPERTIES ${LUAJIT_LINK_FLAGS}
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${PROJECT_NAME})

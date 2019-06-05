@@ -1,6 +1,7 @@
 #version 410 core
-#include ../ext/cooktorrance.glsl
+
 #include ../ext/orennayar.glsl
+#include ../ext/cooktorrance.glsl
 
 // how the heck do shadows work?
 // take each fragment and transform it to "shadow map space"
@@ -22,13 +23,6 @@ uniform sampler2D gNormal;
 uniform sampler2D gColor;
 uniform sampler2D gSpecular;
 uniform sampler2D shadowMap;
-
-float LinearizeDepth(float val) {
-    float n = 1.0; // camera z near
-    float f = 100.0; // camera z far
-    float z = val;
-    return (2.0 * n) / (f + n - z * (f - n));
-}
 
 float getShadow(vec3 matPosition, vec3 normal) {
     vec4 fragPosLightSpace = projection * view * vec4(matPosition, 1.0);
@@ -87,10 +81,11 @@ void main() {
     float edge = 1 - smoothstep(limit - 0.1, limit, angle);
     
     // normal intensity
+    float dist = 20.0 / dot(position - matPosition, position - matPosition);
     float specular = cookTorranceSpecular(lightDirection, viewDirection, normal, roughness, metallic);
     float diffuse = orenNayarDiffuse(lightDirection, viewDirection, normal, roughness, 0.3);
     
-    vec3 lighting = vec3((base) * (1.0-shadow) * edge * (specular + diffuse));
+    vec3 lighting = vec3((base) * (1.0-shadow) * edge * (diffuse + specular) * ao * dist);
     FragColor = vec4(lighting, 1.0);
 }
 

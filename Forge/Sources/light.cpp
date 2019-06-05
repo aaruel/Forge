@@ -31,6 +31,7 @@ namespace XK {
 
     void Light::bind() {
         shader.activate();
+        shader.bind("power", power);
     }
     
     void Light::setPosition(glm::vec3 _position) {
@@ -45,7 +46,7 @@ namespace XK {
     // ShadowCaster
     
     ShadowCaster::ShadowCaster() : window(GlobalSingleton::getInstance()->getWindow()) {
-        shadowShader.attach("shadow.vert").attach("shadow.frag").link();
+        shadowShader.attach("special/shadow.vert").attach("special/shadow.frag").link();
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     
         // Generate buffers
@@ -79,6 +80,7 @@ namespace XK {
     
     void DirectionalLight::bind() {
         Light::bind();
+        camera->render(shader.get());
         shader.bind("position", position).bind("direction", direction);
     }
     

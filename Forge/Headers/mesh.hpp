@@ -4,6 +4,7 @@
 
 #include "camera.hpp"
 #include "shader.hpp"
+#include "skybox.hpp"
 #include "renderable.hpp"
 
 // System Headers
@@ -22,15 +23,6 @@
 // Define Namespace
 namespace XK
 {
-    // Vertex Format
-    struct Vertex {
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec2 uv;
-        glm::vec3 tangent;
-        glm::vec3 bitangent;
-    };
-
     class Mesh : public Renderable
     {
     private:
@@ -43,23 +35,27 @@ namespace XK
             float shininess;
         } matprops;
         
+        RenderParams<TVertex> mRP;
+        
     public:
 
         // Implement Default Constructor and Destructor
-         Mesh() { glGenVertexArrays(1, & mVertexArray); }
-        ~Mesh() { glDeleteVertexArrays(1, & mVertexArray); }
+         Mesh() { glGenVertexArrays(1, &mVAO); }
+        ~Mesh() { glDeleteVertexArrays(1, &mVAO); }
 
         // Implement Custom Constructors
-        Mesh(Shader * shader, std::string const & filename);
-        Mesh(std::vector<Vertex> const & vertices,
-             std::vector<GLuint> const & indices,
-             std::map<GLuint, std::string> const & textures,
-             MatProps _matprops);
+        Mesh(kgr::container * container, Shader * shader, std::string const & filename);
+        Mesh(
+            std::vector<TVertex> const & vertices,
+            std::vector<GLuint> const & indices,
+            std::map<GLuint, std::string> const & textures
+        );
 
         // Public Member Functions
-        virtual void render();
+        virtual void render() override;
         void draw(GLuint shader);
-        void translate(glm::vec3 coords);
+        virtual void translate(glm::vec3 coords) override;
+        virtual void rotate(glm::quat rot) override;
         glm::mat4 & getModel();
 
     private:
@@ -79,16 +75,11 @@ namespace XK
         // Private Member Containers
         std::vector<std::unique_ptr<Mesh>> mSubMeshes;
         std::vector<GLuint> mIndices;
-        std::vector<Vertex> mVertices;
-        std::vector<Vertex> mTangents;
-        std::vector<Vertex> mBitangents;
+        std::vector<TVertex> mVertices;
         std::map<GLuint, std::string> mTextures;
-        glm::mat4 modelMatrix = glm::mat4(1.0f);
 
         // Private Member Variables
-        GLuint mVertexArray;
-        GLuint mVertexBuffer;
-        GLuint mElementBuffer;
+        Skybox * mSkybox = nullptr;
 
     };
 };

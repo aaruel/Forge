@@ -26,10 +26,12 @@ namespace XK {
         
         virtual void bind();
         virtual void setPosition(glm::vec3 _position);
+        void setPower(float p) { power = p; }
         Shader * getShader();
         
     protected:
         glm::vec3 position;
+        float power = 0.5f;
         std::string vertName;
         std::string fragName;
         Shader shader;
@@ -60,12 +62,16 @@ namespace XK {
     
     class DirectionalLight : public Light {
     public:
-        DirectionalLight() : Light("directionallight") {}
+        DirectionalLight() : Light("directionallight") {
+            setPower(2.0f);
+            camera = Camera::getInstance();
+        }
         virtual void bind();
         void setDirection(glm::vec3 d) { direction = d; }
         
     private:
         glm::vec3 direction;
+        Camera * camera;
     };
     
     class PointLight : public Light {
@@ -113,8 +119,6 @@ namespace XK {
         
         // Shadow pass matrices
         Camera camera;
-//        glm::mat4 view;
-//        glm::mat4 projection;
     };
 }
 
