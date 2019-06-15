@@ -100,7 +100,7 @@ namespace XK
         glUniformMatrix4fv(Umodel, 1, GL_FALSE, glm::value_ptr(mModel));
         if (mIndices.size() == 0) return;
         // Draw vertices
-        glBindVertexArray(mVAO);
+        glBindVertexArray(mRP.vao);
         // Runs shaders :)
         glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, nullptr);
     }

@@ -40,8 +40,8 @@ namespace XK
     public:
 
         // Implement Default Constructor and Destructor
-         Mesh() { glGenVertexArrays(1, &mVAO); }
-        ~Mesh() { glDeleteVertexArrays(1, &mVAO); }
+         Mesh() { }
+        ~Mesh() { glDeleteVertexArrays(1, &mRP.vao); }
 
         // Implement Custom Constructors
         Mesh(kgr::container * container, Shader * shader, std::string const & filename);

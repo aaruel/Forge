@@ -31,6 +31,8 @@ public:
     // Getters
     glm::vec3 getPosition() { return position; }
     glm::vec3 getEye() { return eye; }
+    const glm::mat4& getView() { return view; }
+    const glm::mat4& getProjection() { return proj; }
     
     // Setters
     void setLocation(

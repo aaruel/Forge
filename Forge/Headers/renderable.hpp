@@ -57,6 +57,7 @@ namespace XK {
     struct RenderParams {
         std::vector<T> vertices;
         std::vector<GLuint> indices;
+        GLuint vao;
         GLuint vbuffer;
         GLuint ibuffer;
     };
@@ -117,8 +118,8 @@ namespace XK {
         template<typename T>
         void uploadToGPU(RenderParams<T> * rp) {
             // Bind a Vertex Array Object
-            glGenVertexArrays(1, &mVAO);
-            glBindVertexArray(mVAO);
+            glGenVertexArrays(1, &rp->vao);
+            glBindVertexArray(rp->vao);
 
             // Copy Vertex Buffer Data
             glGenBuffers(1, &rp->vbuffer);
@@ -162,8 +163,6 @@ namespace XK {
         // Rendering pointers for management
         Shader * mShader;
         Camera * mCamera;
-        // Vertex Array Object id
-        GLuint mVAO;
         // Model matrix
         // Rotation * Transformation * Model
         glm::mat4 mModel = glm::mat4(1.f);
