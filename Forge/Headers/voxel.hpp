@@ -11,6 +11,7 @@
 #include "shader.hpp"
 #include "camera.hpp"
 #include "renderable.hpp"
+#include "skybox.hpp"
 
 // System Headers
 #include <PolyVox/CubicSurfaceExtractor.h>
@@ -72,7 +73,7 @@ namespace XK {
         bool mesherReady();
         
     public:
-        Voxel(Shader * shader);
+        Voxel(kgr::container * container, Shader * shader);
         ~Voxel();
         
         virtual void render();
@@ -97,6 +98,9 @@ namespace XK {
         // Disable Copying and Assignment
         Voxel(Voxel const &) = delete;
         Voxel & operator=(Voxel const &) = delete;
+
+        // Reflection component
+        Skybox * mSkybox = nullptr;
         
     };
 };

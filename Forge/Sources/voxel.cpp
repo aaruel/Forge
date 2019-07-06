@@ -18,9 +18,11 @@ namespace XK {
     /// Public ///
     //////////////
 
-    Voxel::Voxel(Shader * shader) {
+    Voxel::Voxel(kgr::container * container, Shader * shader) {
         mShader = shader;
         mCamera = Camera::getInstance();
+        mContainer = container;
+        mSkybox = &mContainer->service<SkyboxService>();
         auto * pager = new FastNoisePager<MaterialDensityPair88>();
         
         // Generate volumetric mesh
@@ -60,6 +62,11 @@ namespace XK {
             glActiveTexture(GL_TEXTURE0 + texture.unit);
             glBindTexture(GL_TEXTURE_2D, texture.buffer);
         }
+
+        // Pass skybox for reflection
+        glActiveTexture(GL_TEXTURE31);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mSkybox->getTextureId());
+        glUniform1i(glGetUniformLocation(nShader, "cubemap"), 31);
 
         // Bind the vertex array for the current mesh
         glBindVertexArray(mData.vertexArrayObject);

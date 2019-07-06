@@ -14,6 +14,7 @@
 #define light_h
 
 #include <glm/glm.hpp>
+#include <kangaru/kangaru.hpp>
 #include "shader.hpp"
 #include "camera.hpp"
 #include "input.hpp"
@@ -76,7 +77,7 @@ namespace XK {
     
     class PointLight : public Light {
     public:
-        PointLight() : Light("pointlight"), camera(Camera::getInstance()) {}
+        PointLight() : Light("pbr"), camera(Camera::getInstance()) {}
         virtual void bind();
     
     private:

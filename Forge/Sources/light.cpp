@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "glitter.hpp"
 #include "light.hpp"
+#include "gbuffer.hpp"
 
 // Types of light to consider:
 //   - Ambient Light
@@ -112,14 +113,15 @@ namespace XK {
     
     void SpotLight::bind() {
         Light::bind();
-        glActiveTexture(GL_TEXTURE5);
+        const GLint shadowIndex = GBuffer::N_ATTACHMENTS;
+        glActiveTexture(GL_TEXTURE0 + shadowIndex);
         glBindTexture(GL_TEXTURE_2D, map);
         camera.render(shader.get());
         shader
             .bind("position", position)
             .bind("direction", direction)
             .bind("aperture", aperture)
-            .bind("shadowMap", 5);
+            .bind("shadowMap", shadowIndex);
     }
     
     void SpotLight::updateMatrices() {

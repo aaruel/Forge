@@ -5,6 +5,8 @@ layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gColor;
 layout (location = 3) out vec4 gSpecular;
 layout (location = 4) out vec4 gEmissive;
+layout (location = 5) out vec3 gDiffuseEnv;
+layout (location = 6) out vec3 gSpecularEnv;
 
 in vec2 TexCoords;
 in vec3 FragPos;
@@ -40,13 +42,22 @@ void main() {
     );
     gNormal = (texture(normals, TexCoords).rgb * 2.0 - 1.0) * tangentToWorld;
     // and the diffuse per-fragment color
-    vec3 I = normalize(FragPos - camPos);
-    vec3 R = reflect(I, normalize(gNormal));
-    gColor = mix(texture(cubemap, R), texture(diffuse2, TexCoords), metallic);
+    gColor = texture(diffuse2, TexCoords);
     // Beyond here is material properties
     gSpecular = vec4(
         texture(unknown, TexCoords).rgb,
         texture(ambient, TexCoords).a
     );
     gEmissive = texture(emissive, TexCoords);
+    // diffuse IBL term
+    //    I know that my IBL cubemap has diffuse pre-integrated value in 10th MIP level
+    //    actually level selection should be tweakable or from separate diffuse cubemap
+    mat3 tnrm = transpose(tangentToWorld);
+    gDiffuseEnv = texture(cubemap, tnrm * gNormal).xyz;
+
+    // specular IBL term
+    //    11 magic number is total MIP levels in cubemap, this is simplest way for picking
+    //    MIP level from roughness value (but it's not correct, however it looks fine)
+    vec3 refl = tnrm * reflect(-gPosition, gNormal);
+    gSpecularEnv = texture(cubemap, refl).xyz;
 }

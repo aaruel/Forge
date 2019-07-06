@@ -20,7 +20,7 @@
 
 namespace XK {
     class Skybox {
-        const float skyboxVertices[N_SKYBOX_VERTS] = {
+        static constexpr float skyboxVertices[N_SKYBOX_VERTS] = {
             -1.0f,  1.0f, -1.0f,
             -1.0f, -1.0f, -1.0f,
              1.0f, -1.0f, -1.0f,
@@ -65,6 +65,7 @@ namespace XK {
         };
         
         unsigned int textureId;
+        unsigned int BRDFmapId;
         Camera * camera;
         Shader shader;
         unsigned int skyboxArray;
@@ -74,9 +75,12 @@ namespace XK {
         Skybox(std::string const & filepath, std::string const & ext = "jpg");
         void draw();
         GLuint getTextureId();
+        GLuint getBRDFmapId();
         
     private:
         void loadVerts();
+        void loadSkybox(std::string const & filename, std::string const & ext);
+        void loadSkyboxHDR();
     };
     
     struct SkyboxService : kgr::single_service<Skybox>, kgr::supplied {};

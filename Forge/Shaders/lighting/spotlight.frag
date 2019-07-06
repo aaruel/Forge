@@ -1,7 +1,7 @@
 #version 410 core
 
-#include ../ext/orennayar.glsl
-#include ../ext/cooktorrance.glsl
+#include ../ext/lambert.glsl
+#include ../ext/ggx.glsl
 
 // how the heck do shadows work?
 // take each fragment and transform it to "shadow map space"
@@ -82,10 +82,10 @@ void main() {
     
     // normal intensity
     float dist = 20.0 / dot(position - matPosition, position - matPosition);
-    float specular = cookTorranceSpecular(lightDirection, viewDirection, normal, roughness, metallic);
-    float diffuse = orenNayarDiffuse(lightDirection, viewDirection, normal, roughness, 0.3);
+    float specular = REF_GGX(normal, viewDirection, lightDirection, roughness, 0.05);
+    float diffuse = lambertDiffuse(lightDirection, normal);
     
-    vec3 lighting = vec3((base) * (1.0-shadow) * edge * (diffuse + specular) * ao * dist);
+    vec3 lighting = vec3((base) * (1.0-shadow) * edge * (diffuse + specular) * ao * dist) / 3.141592654;
     FragColor = vec4(lighting, 1.0);
 }
 

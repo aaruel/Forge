@@ -1,7 +1,7 @@
 #version 410 core
 
-#include ../ext/orennayar.glsl
-#include ../ext/cooktorrance.glsl
+#include ../ext/lambert.glsl
+#include ../ext/ggx.glsl
 
 out vec4 FragColor;
 
@@ -29,9 +29,9 @@ void main() {
     vec3 lightDirection = normalize(-direction);
     vec3 viewDirection = normalize(camPos - matPosition);
     
-    float specular = cookTorranceSpecular(lightDirection, viewDirection, normal, roughness, metallic);
-    float diffuse = orenNayarDiffuse(lightDirection, viewDirection, normal, roughness, 0.3);
-    vec3 lighting = vec3(specular + diffuse);
+    float specular = REF_GGX(normal, viewDirection, lightDirection, roughness, 0.05);
+    float diffuse = lambertDiffuse(lightDirection, normal);
+    vec3 lighting = vec3(diffuse + specular);
     
     FragColor = base * vec4(lighting, 1.0) * power;
 }

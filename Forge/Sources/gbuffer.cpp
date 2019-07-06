@@ -15,7 +15,8 @@
 namespace XK {
     /// Public
     
-    GBuffer::GBuffer(GLFWwindow * window) {
+    GBuffer::GBuffer(kgr::container * container, GLFWwindow * window) {
+        skybox = &container->service<SkyboxService>();
         glfwGetWindowSize(window, &wWidth, &wHeight);
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
         // setup render framebuffer
@@ -37,8 +38,14 @@ namespace XK {
         initTexture(&gEmissive, 4, [this](){
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, wWidth, wHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         });
+        initTexture(&gDiffuseEnv, 5, [this](){
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, wWidth, wHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
+        });
+        initTexture(&gSpecularEnv, 6, [this](){
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, wWidth, wHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
+        });
         // Tell OpenGL the output locations of the fragment shader
-        glDrawBuffers(5, attachments);
+        glDrawBuffers(N_ATTACHMENTS, attachments);
         // Manually generate depth buffer into a *write only* renderbuffer for depth/stencil testing
         glGenRenderbuffers(1, &gDepth);
         glBindRenderbuffer(GL_RENDERBUFFER, gDepth);
@@ -65,6 +72,9 @@ namespace XK {
         lShader->bind("gColor", 2);
         lShader->bind("gSpecular", 3);
         lShader->bind("gEmissive", 4);
+        lShader->bind("gDiffuseEnv", 5);
+        lShader->bind("gSpecularEnv", 6);
+        lShader->bind("iblbrdf", 7);
         return *this;
     }
 
@@ -106,6 +116,12 @@ namespace XK {
         glBindTexture(GL_TEXTURE_2D, gSpecular);
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, gEmissive);
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, gDiffuseEnv);
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, gSpecularEnv);
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_2D, skybox->getBRDFmapId());
         for (Light * light : lights) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE, GL_ONE);

@@ -12,12 +12,14 @@
 #include "shader.hpp"
 #include "light.hpp"
 #include "renderable.hpp"
+#include "skybox.hpp"
 
 // System Headers
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <functional>
 #include <vector>
+#include <kangaru/kangaru.hpp>
 
 namespace XK {
     class GBuffer {
@@ -27,7 +29,7 @@ namespace XK {
         void runLighting(Light * light);
 
     public:
-        GBuffer(GLFWwindow * window);
+        GBuffer(kgr::container * container, GLFWwindow * window);
         GBuffer& attach(Light * light);
         Shader * getShader();
         void engage();
@@ -35,10 +37,15 @@ namespace XK {
         void runLighting();
         void createShadowMaps(Pipeline * objects);
 
+    public:
+        // Constants
+        static constexpr size_t N_ATTACHMENTS = 7;
+
     private:
         // Frame shaders
         Shader shader;
         std::vector<Light*> lights;
+        Skybox * skybox;
         
         // Screen sizes
         GLint wWidth;
@@ -53,13 +60,17 @@ namespace XK {
         GLuint gColor;
         GLuint gSpecular;
         GLuint gEmissive;
+        GLuint gDiffuseEnv;
+        GLuint gSpecularEnv;
         GLuint gDepth;
-        GLuint attachments[5] = {
+        GLuint attachments[N_ATTACHMENTS] = {
             GL_COLOR_ATTACHMENT0,
             GL_COLOR_ATTACHMENT1,
             GL_COLOR_ATTACHMENT2,
             GL_COLOR_ATTACHMENT3,
-            GL_COLOR_ATTACHMENT4
+            GL_COLOR_ATTACHMENT4,
+            GL_COLOR_ATTACHMENT5,
+            GL_COLOR_ATTACHMENT6
         };
         
         // Rendering frame

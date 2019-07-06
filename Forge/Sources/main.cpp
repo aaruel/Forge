@@ -52,8 +52,10 @@ int main() {
     // Build shaders
     Shader defMesh;
     defMesh.attach("deferred/mesh.vert").attach("deferred/mesh.frag").link();
+    Shader defVox;
+    defVox.attach("deferred/voxel.vert").attach("deferred/voxel.frag").link();
     
-    Voxelscape<VoxelPlane> vs;
+    //Voxelscape<VoxelPlane> vs;
     
     // Instantiate camera
     Camera * camera = Camera::getInstance();
@@ -64,22 +66,30 @@ int main() {
     Skybox& skybox = container.service<SkyboxService>();
     
     // Build gBuffer
-    GBuffer gbuffer(mWindow);
+    GBuffer gbuffer(&container, mWindow);
     AmbientLight al;
-    SpotLight sl;
+    PointLight sl;
     DirectionalLight dl;
     EmissiveLight el;
     gbuffer.attach(&al).attach(&el).attach(&dl).attach(&sl);
     sl.setPosition(glm::vec3(0.f, 0.4, -3.f));
-    sl.setDirection(glm::vec3(0.f, 0.f, 1.f));
+    //sl.setDirection(glm::vec3(0.f, 0.f, 1.f));
     dl.setDirection(glm::vec3(0.f, -1.f, 0.f));
+    dl.setPower(0.8f);
     
     // Voxel meshing
-//    Voxel voxel(&defVox);
-//    voxel
-//        .addTexture("texture_diffuse", "snow/snow-base.png")
-//        .addTexture("normals", "snow/snow-normal.png")
-//        .addTexture("SSAO", "snow/snow-ao.png");
+    Voxel voxel(&container, &defVox);
+    voxel
+        .addTexture("texture_diffuse", "snow/snow-base.png")
+        .addTexture("normals", "snow/snow-normal.png")
+        .addTexture("ambient", "snow/snow-ao.png")
+        .addTexture("roughness", "snow/snow-roughness.png")
+        .addTexture("heightmap", "snow/snow-height.png");
+//        .addTexture("texture_diffuse", "tiles/Tiles_023_Base_Color.jpg")
+//        .addTexture("normals",         "tiles/Tiles_023_Normal.jpg")
+//        .addTexture("ambient",         "tiles/Tiles_023_ambientOcclusion.jpg")
+//        .addTexture("roughness",       "tiles/Tiles_023_Roughness.jpg")
+//        .addTexture("heightmap",       "tiles/Tiles_023_Height.png");
     
     Mesh mesh(&container, &defMesh, "helmet/DamagedHelmet.gltf");
     
@@ -89,7 +99,7 @@ int main() {
     // GUI
     GUI::init(mWindow);
     
-    Pipeline objects = {&mesh, &vs};
+    Pipeline objects = {&mesh, &voxel};
     
     float mover = 0.0;
     glm::quat q = glm::angleAxis(glm::radians(90.f), glm::vec3(1.0, 0.0, 0.0));
@@ -108,10 +118,9 @@ int main() {
         
         // Step camera
         camera->update();
-        
         if (slFollowCam) {
             sl.setPosition(camera->getPosition());
-            sl.setDirection(camera->getEye());
+            //sl.setDirection(camera->getEye());
         }
         
         // gbuffer framebuffer rendering

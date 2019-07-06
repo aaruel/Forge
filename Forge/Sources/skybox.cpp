@@ -31,9 +31,7 @@ namespace XK {
         glEnableVertexAttribArray(0); // Vertex Positions
     }
 
-    Skybox::Skybox(std::string const & filename, std::string const & ext) : camera(Camera::getInstance()) {
-        loadVerts();
-    
+    void Skybox::loadSkybox(std::string const & filename, std::string const & ext) {
         // Mostly obtained through https://learnopengl.com/Advanced-OpenGL/Cubemaps
         const int nFaces = 6;
         std::string location = PROJECT_SOURCE_DIR "/Skybox/" + filename;
@@ -45,19 +43,19 @@ namespace XK {
             "front."+ext,
             "back."+ext
         };
-        
+
         // Generate and load texture buffer
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_CUBE_MAP, textureId);
-        
+
         // Load Textures
         int width, height, nrChannels;
         for (int i = 0; i < nFaces; ++i) {
-        
+
             // Load in the image
             std::string path = location + faces[i];
             unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
-            
+
             // Upload image to GPU
             if (data) {
                 glTexImage2D(
@@ -71,19 +69,57 @@ namespace XK {
                 stbi_image_free(data);
             }
         }
-        
+
         // Set properties
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        
+
         // Load shader
         shader.attach("deferred/skybox.vert").attach("deferred/skybox.frag").link();
     }
+
+    void Skybox::loadSkyboxHDR() {
+
+
+        // Load shader
+        shader.attach("deferred/skyboxHDR.vert").attach("deferred/skyboxHDR.frag").link();
+    }
+
+    Skybox::Skybox(std::string const & filename, std::string const & ext) : camera(Camera::getInstance()) {
+        loadVerts();
+        if (ext == "hdr") loadSkyboxHDR();
+        else loadSkybox(filename, ext);
+
+        // Generate and load texture buffer
+        glGenTextures(1, &BRDFmapId);
+        glBindTexture(GL_TEXTURE_2D, BRDFmapId);
+
+        // Load BRDF LUT
+        std::string path = PROJECT_SOURCE_DIR "/Textures/PBR/ibl_brdf_lut.png";
+        int width, height, nrChannels;
+        unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+
+        if (data) {
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else {
+            std::cout << "BRDF texture failed to load" << std::endl;
+            stbi_image_free(data);
+        }
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
     
     GLuint Skybox::getTextureId() { return textureId; }
+    GLuint Skybox::getBRDFmapId() { return BRDFmapId; }
     
     void Skybox::draw() {
         glDepthMask(GL_FALSE);
