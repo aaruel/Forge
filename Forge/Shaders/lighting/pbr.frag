@@ -8,9 +8,10 @@ uniform sampler2D gSpecular;
 uniform sampler2D gDiffuseEnv;
 uniform sampler2D gSpecularEnv;
 uniform sampler2D iblbrdf;
+uniform mat4 view;
+uniform vec3 camPos;
 
 in vec2 TexCoords; // texture coords
-
 out vec4 color;
 
 //uniform samplerCube envd;  // prefiltered env cubemap
@@ -44,7 +45,8 @@ float phong_diffuse()
 // product could be NdV or VdH depending on used technique
 vec3 fresnel_factor(in vec3 f0, in float product)
 {
-    return mix(f0, vec3(1.0), pow(1.01 - product, 5.0));
+    //return mix(f0, vec3(1.0), pow(1.01 - product, 5.0));
+    return max(f0 + (1.0 - f0) * pow(1.0 - product, 5.0), 0.0);
 }
 
 
@@ -125,12 +127,25 @@ vec3 cooktorrance_specular(in float NdL, in float NdV, in float NdH, in vec3 spe
     return (1.0 / rim) * specular * G * D;
 }
 
+vec4 SRGBtoLINEAR(vec4 srgbIn) {
+    return vec4(pow(srgbIn.xyz, vec3(2.2)), srgbIn.w);
+}
+
+vec3 LINEARtoSRGB(vec3 color) {
+    return pow(color, vec3(1.0/2.2));
+}
+
+vec2 integrateBRDF(in float roughness, in float NdV) {
+    vec2 brdfSample = clamp(vec2(NdV, roughness), vec2(0.0, 0.0), vec2(1.0, 1.0));
+    return SRGBtoLINEAR(texture(iblbrdf, brdfSample)).rg;
+}
+
 
 void main() {
-    // World space
+    // World space model vertex
     vec3 v_pos = texture(gPosition, TexCoords).rgb;
 
-    // point light direction to point in world space
+    // point light in world space
     vec3 local_light_pos = position;
 
     // light attenuation
@@ -138,28 +153,28 @@ void main() {
 
     // L, V, H, N vectors
     vec3 L = normalize(local_light_pos - v_pos);
-    vec3 V = normalize(v_pos);
+    vec3 V = normalize(camPos - v_pos);
     vec3 H = normalize(L + V);
     vec3 N = normalize(texture(gNormal, TexCoords).rgb);
 
     // albedo/specular base
-    vec3 base = texture(gColor, TexCoords).xyz;
+    vec3 base = SRGBtoLINEAR(texture(gColor, TexCoords)).xyz;
 
     // roughness
-    float roughness = texture(gSpecular, TexCoords).y;
+    float roughness = texture(gSpecular, TexCoords).g;
 
     // material params
-    float metallic = texture(gSpecular, TexCoords).x;
+    float metallic = texture(gSpecular, TexCoords).b;
 
     // mix between metal and non-metal material, for non-metal
     // constant base specular factor of 0.04 grey is used
     vec3 specular = mix(vec3(0.04), base, metallic);
 
     // diffuse IBL term
-    vec3 envdiff = texture(gDiffuseEnv, TexCoords).rgb;
+    vec3 envdiff = SRGBtoLINEAR( texture(gDiffuseEnv, TexCoords) ).rgb;
 
     // specular IBL term
-    vec3 envspec = texture(gSpecularEnv, TexCoords).rgb;
+    vec3 envspec = SRGBtoLINEAR( texture(gSpecularEnv, TexCoords) ).rgb;
 
     // compute material reflectance
 
@@ -168,10 +183,6 @@ void main() {
     float NdH = max(0.001, dot(N, H));
     float HdV = max(0.001, dot(H, V));
     float LdV = max(0.001, dot(L, V));
-
-    // fresnel term is common for any, except phong
-    // so it will be calcuated inside ifdefs
-
 
 #ifdef PHONG
     // specular reflectance with PHONG
@@ -192,8 +203,6 @@ void main() {
 #endif
 
     specref *= vec3(NdL);
-
-    // diffuse is common for any model
     vec3 diffref = (vec3(1.0) - specfresnel) * phong_diffuse() * NdL;
 
 
@@ -207,7 +216,7 @@ void main() {
     diffuse_light += diffref * light_color;
 
     // IBL lighting
-    vec2 brdf = texture(iblbrdf, vec2(roughness, 1.0 - NdV)).xy;
+    vec2 brdf = integrateBRDF(roughness, NdV);
     vec3 iblspec = min(vec3(0.99), fresnel_factor(specular, NdV) * brdf.x + brdf.y);
     reflected_light += iblspec * envspec;
     diffuse_light += envdiff * (1.0 / PI);
@@ -217,5 +226,5 @@ void main() {
         diffuse_light * mix(base, vec3(0.0), metallic) +
         reflected_light;
 
-    color = vec4(result, 1);
+    color = vec4(LINEARtoSRGB(result), 1.0);
 }

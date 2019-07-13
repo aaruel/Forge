@@ -11,6 +11,7 @@ out vec2 TexCoords;
 out vec3 Normal;
 out vec3 Tangent;
 out vec3 Binormal;
+out mat3 NormalMatrix;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -21,12 +22,13 @@ void main() {
     vec4 worldPos = model * aPos;
     FragPos = worldPos.xyz;
     TexCoords = aTexCoords;
-    
+
     // transform to normal space
     mat3 normalMatrix = transpose(inverse(mat3(model)));
     Normal = normalize(normalMatrix * aNormal.xyz);
     Tangent = normalize(normalMatrix * aTangent);
     Binormal = normalize(normalMatrix * aBitangent);
-    
+    NormalMatrix = normalMatrix;
+
     gl_Position = projection * view * worldPos;
 }

@@ -71,7 +71,7 @@ int main() {
     PointLight sl;
     DirectionalLight dl;
     EmissiveLight el;
-    gbuffer.attach(&al).attach(&el).attach(&dl).attach(&sl);
+    gbuffer.attach(&al).attach(&el).attach(&sl);
     sl.setPosition(glm::vec3(0.f, 0.4, -3.f));
     //sl.setDirection(glm::vec3(0.f, 0.f, 1.f));
     dl.setDirection(glm::vec3(0.f, -1.f, 0.f));
@@ -85,11 +85,6 @@ int main() {
         .addTexture("ambient", "snow/snow-ao.png")
         .addTexture("roughness", "snow/snow-roughness.png")
         .addTexture("heightmap", "snow/snow-height.png");
-//        .addTexture("texture_diffuse", "tiles/Tiles_023_Base_Color.jpg")
-//        .addTexture("normals",         "tiles/Tiles_023_Normal.jpg")
-//        .addTexture("ambient",         "tiles/Tiles_023_ambientOcclusion.jpg")
-//        .addTexture("roughness",       "tiles/Tiles_023_Roughness.jpg")
-//        .addTexture("heightmap",       "tiles/Tiles_023_Height.png");
     
     Mesh mesh(&container, &defMesh, "helmet/DamagedHelmet.gltf");
     
@@ -99,10 +94,11 @@ int main() {
     // GUI
     GUI::init(mWindow);
     
-    Pipeline objects = {&mesh, &voxel};
+    Pipeline objects = {&mesh};
     
     float mover = 0.0;
     glm::quat q = glm::angleAxis(glm::radians(90.f), glm::vec3(1.0, 0.0, 0.0));
+    glm::quat r = glm::angleAxis(glm::radians(1.f), glm::vec3(0.0, 1.0, 0.0));
     mesh.rotate(q);
     bool slFollowCam = true;
     Input::getInstance()->registerKeyEvent(GLFW_KEY_9, [&slFollowCam](){slFollowCam = !slFollowCam;});
@@ -116,6 +112,9 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        // rotate
+        mesh.rotate(r);
+
         // Step camera
         camera->update();
         if (slFollowCam) {

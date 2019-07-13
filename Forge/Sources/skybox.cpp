@@ -47,20 +47,31 @@ namespace XK {
         // Generate and load texture buffer
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_CUBE_MAP, textureId);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 5);
 
         // Load Textures
         int width, height, nrChannels;
         for (int i = 0; i < nFaces; ++i) {
 
             // Load in the image
+            GLenum format;
             std::string path = location + faces[i];
             unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+
+            // Set the Correct Channel Format
+            switch (nrChannels) {
+                case 1 : format = GL_ALPHA;     break;
+                case 2 : format = GL_LUMINANCE; break;
+                case 3 : format = GL_RGB;       break;
+                case 4 : format = GL_RGBA;      break;
+            }
 
             // Upload image to GPU
             if (data) {
                 glTexImage2D(
                     GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                    0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+                    0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data
                 );
                 stbi_image_free(data);
             }
@@ -71,11 +82,12 @@ namespace XK {
         }
 
         // Set properties
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
         // Load shader
         shader.attach("deferred/skybox.vert").attach("deferred/skybox.frag").link();
@@ -98,14 +110,21 @@ namespace XK {
         glBindTexture(GL_TEXTURE_2D, BRDFmapId);
 
         // Load BRDF LUT
+        GLenum format;
         std::string path = PROJECT_SOURCE_DIR "/Textures/PBR/ibl_brdf_lut.png";
         int width, height, nrChannels;
         unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+        switch (nrChannels) {
+            case 1 : format = GL_ALPHA;     break;
+            case 2 : format = GL_LUMINANCE; break;
+            case 3 : format = GL_RGB;       break;
+            case 4 : format = GL_RGBA;      break;
+        }
 
         if (data) {
             glTexImage2D(
                 GL_TEXTURE_2D,
-                0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+                0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data
             );
             stbi_image_free(data);
         }

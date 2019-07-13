@@ -80,6 +80,8 @@ namespace XK
 
         // Private Member Variables
         Skybox * mSkybox = nullptr;
+        Skybox mRadiance = Skybox("retnika/radiance/", "png");
+        Skybox mIrradiance = Skybox("retnika/irradiance/", "png");
 
     };
 };

@@ -90,6 +90,7 @@ namespace XK {
     
     void PointLight::bind() {
         Light::bind();
+        camera->render(shader.get());
         shader.bind("position", position);
     }
     
