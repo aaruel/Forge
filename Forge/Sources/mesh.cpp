@@ -71,12 +71,6 @@ namespace XK
         glActiveTexture(GL_TEXTURE31);
         glBindTexture(GL_TEXTURE_CUBE_MAP, mSkybox->getTextureId());
         glUniform1i(glGetUniformLocation(shader, "cubemap"), 31);
-        glActiveTexture(GL_TEXTURE30);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, mRadiance.getTextureId());
-        glUniform1i(glGetUniformLocation(shader, "radiance"), 30);
-        glActiveTexture(GL_TEXTURE29);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, mIrradiance.getTextureId());
-        glUniform1i(glGetUniformLocation(shader, "irradiance"), 29);
         // Pass to recursive function
         draw(shader);
     }

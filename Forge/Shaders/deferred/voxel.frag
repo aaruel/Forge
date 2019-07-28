@@ -5,6 +5,8 @@ layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gColor;
 layout (location = 3) out vec4 gSpecular;
 layout (location = 4) out vec4 gEmissive;
+layout (location = 5) out vec3 gDiffuseEnv;
+layout (location = 6) out vec3 gSpecularEnv;
 
 in vec2 TexCoords;
 in vec3 FragPos;
@@ -17,6 +19,7 @@ uniform sampler2D roughness;
 uniform sampler2D heightmap;
 uniform samplerCube cubemap;
 uniform vec3 camPos;
+uniform vec3 eye;
 uniform mat4 view;
 
 // http://www.thetenthplanet.de/archives/1180
@@ -45,8 +48,16 @@ vec3 perturb_normal( vec3 N, vec3 V, vec2 texcoord ) {
     return normalize( TBN * map );
 }
 
+vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
+{
+    float height =  texture(heightmap, texCoords).r;
+    vec2 p = viewDir.xy / viewDir.z * (height * 5.0);
+    return texCoords - p;
+}
+
 void main() {
     vec2 texCoords = FragPos.xz/4.0;
+    texCoords = ParallaxMapping(texCoords, eye);
     // store the fragment position vector in the first gbuffer texture
     gPosition = FragPos;
     // also store the per-fragment normals into the gbuffer
@@ -55,9 +66,11 @@ void main() {
     gColor = texture(texture_diffuse, texCoords);
     gSpecular = vec4(
         /*occlusion:  */ 0.0,
-        /*metallic:   */ 0.0,
         /*roughness:  */ texture(roughness, texCoords).a,
+        /*metallic:   */ 0.0,
         /*ambientocc: */ texture(ambient, texCoords).a
     );
     gEmissive = vec4(0.0);
+    gDiffuseEnv = vec3(1.0);
+    gSpecularEnv = vec3(1.0);
 }

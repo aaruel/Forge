@@ -1,6 +1,5 @@
 #version 410 core
 
-// https://gist.github.com/galek/53557375251e1a942dfa
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gColor;
@@ -8,14 +7,13 @@ uniform sampler2D gSpecular;
 uniform sampler2D gDiffuseEnv;
 uniform sampler2D gSpecularEnv;
 uniform sampler2D iblbrdf;
+uniform samplerCube radiance;
+uniform samplerCube irradiance;
 uniform mat4 view;
 uniform vec3 camPos;
 
 in vec2 TexCoords; // texture coords
 out vec4 color;
-
-//uniform samplerCube envd;  // prefiltered env cubemap
-//uniform sampler2D iblbrdf; // IBL BRDF normalization precalculated tex
 
 
 #define PI 3.1415926
@@ -168,13 +166,14 @@ void main() {
 
     // mix between metal and non-metal material, for non-metal
     // constant base specular factor of 0.04 grey is used
-    vec3 specular = mix(vec3(0.04), base, metallic);
+    vec3 specularColor = mix(vec3(0.04), base, metallic);
 
     // diffuse IBL term
-    vec3 envdiff = SRGBtoLINEAR( texture(gDiffuseEnv, TexCoords) ).rgb;
+    vec3 diffuseSample = SRGBtoLINEAR( texture(irradiance, N) ).rgb;
 
     // specular IBL term
-    vec3 envspec = SRGBtoLINEAR( texture(gSpecularEnv, TexCoords) ).rgb;
+    vec3 refl = reflect(normalize(-V), N);
+    vec3 specularSample = SRGBtoLINEAR( textureLod(radiance, refl, roughness * 5) ).rgb;
 
     // compute material reflectance
 
@@ -186,19 +185,19 @@ void main() {
 
 #ifdef PHONG
     // specular reflectance with PHONG
-    vec3 specfresnel = fresnel_factor(specular, NdV);
+    vec3 specfresnel = fresnel_factor(specularColor, NdV);
     vec3 specref = phong_specular(V, L, N, specfresnel, roughness);
 #endif
 
 #ifdef BLINN
     // specular reflectance with BLINN
-    vec3 specfresnel = fresnel_factor(specular, HdV);
+    vec3 specfresnel = fresnel_factor(specularColor, HdV);
     vec3 specref = blinn_specular(NdH, specfresnel, roughness);
 #endif
 
 #ifdef COOK
     // specular reflectance with COOK-TORRANCE
-    vec3 specfresnel = fresnel_factor(specular, HdV);
+    vec3 specfresnel = fresnel_factor(specularColor, HdV);
     vec3 specref = cooktorrance_specular(NdL, NdV, NdH, specfresnel, roughness);
 #endif
 
@@ -217,9 +216,9 @@ void main() {
 
     // IBL lighting
     vec2 brdf = integrateBRDF(roughness, NdV);
-    vec3 iblspec = min(vec3(0.99), fresnel_factor(specular, NdV) * brdf.x + brdf.y);
-    reflected_light += iblspec * envspec;
-    diffuse_light += envdiff * (1.0 / PI);
+    vec3 iblspec = min(vec3(0.99), specularColor * brdf.x + brdf.y);
+    reflected_light += iblspec * specularSample;
+    diffuse_light += diffuseSample * (1.0 / PI);
 
     // final result
     vec3 result =

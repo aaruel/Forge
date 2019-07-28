@@ -11,6 +11,8 @@
 #include "light.hpp"
 #include "gui.hpp"
 #include "voxelscape.hpp"
+#include "ubomanager.hpp"
+#include "shadermanager.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -94,7 +96,7 @@ int main() {
     // GUI
     GUI::init(mWindow);
     
-    Pipeline objects = {&mesh};
+    Pipeline objects = {&mesh, &voxel};
     
     float mover = 0.0;
     glm::quat q = glm::angleAxis(glm::radians(90.f), glm::vec3(1.0, 0.0, 0.0));
@@ -102,6 +104,8 @@ int main() {
     mesh.rotate(q);
     bool slFollowCam = true;
     Input::getInstance()->registerKeyEvent(GLFW_KEY_9, [&slFollowCam](){slFollowCam = !slFollowCam;});
+
+    UBOManager<UBO::Float, UBO::Vector, UBO::Matrix> x("");
     
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -113,7 +117,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         // rotate
-        mesh.rotate(r);
+        //mesh.rotate(r);
 
         // Step camera
         camera->update();
@@ -126,17 +130,15 @@ int main() {
         gbuffer.engage();
         
             // Draw skybox first so the actual map doesn't clip
-            skybox.draw();
+            sl.mRadiance.draw();
             Renderable::renderAll(&objects);
         
         gbuffer.disengage();
         
         gbuffer.createShadowMaps(&objects);
-        
-        //glEnable(GL_FRAMEBUFFER_SRGB);
+
         // lighting pass
         gbuffer.runLighting();
-        //glDisable(GL_FRAMEBUFFER_SRGB);
         
         // Console rendering
         GUI::render();

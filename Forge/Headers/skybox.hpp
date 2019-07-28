@@ -70,9 +70,10 @@ namespace XK {
         Shader shader;
         unsigned int skyboxArray;
         unsigned int skyboxBuffer;
+        int mipLevels;
     
     public:
-        Skybox(std::string const & filepath, std::string const & ext = "jpg");
+        Skybox(std::string const & filepath, std::string const & ext = "jpg", unsigned levels = 1);
         void draw();
         GLuint getTextureId();
         GLuint getBRDFmapId();

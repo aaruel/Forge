@@ -60,3 +60,7 @@
 	path = Forge/Vendor/voxels
 	url = https://github.com/aaruel/voxels
 	branch = xplatform
+[submodule "Forge/Vendor/rapidjson"]
+	path = Forge/Vendor/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
+	branch = master

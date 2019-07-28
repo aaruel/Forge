@@ -91,6 +91,15 @@ namespace XK {
     void PointLight::bind() {
         Light::bind();
         camera->render(shader.get());
+
+        glActiveTexture(GL_TEXTURE30);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mRadiance.getTextureId());
+        shader.bind("radiance", 30);
+
+        glActiveTexture(GL_TEXTURE29);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mIrradiance.getTextureId());
+        shader.bind("irradiance", 29);
+
         shader.bind("position", position);
     }
     

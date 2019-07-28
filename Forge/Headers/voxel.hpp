@@ -12,6 +12,7 @@
 #include "camera.hpp"
 #include "renderable.hpp"
 #include "skybox.hpp"
+#include "materials.hpp"
 
 // System Headers
 #include <PolyVox/CubicSurfaceExtractor.h>
@@ -40,7 +41,7 @@ namespace XK {
         float scale;
     };
     
-    struct Texture {
+    struct oldTexture {
         GLuint buffer;
         GLint unit;
         std::string location;
@@ -78,9 +79,14 @@ namespace XK {
         
         virtual void render();
         bool getVoxelFromEye(PolyVox::Vector3DInt32 & result, bool adjacent = true);
-        // Builder pattern texture adding
+
+        // Builder pattern texture adding (Deprecated)
         Voxel & addTexture(std::string texLocation, std::string filename);
-        
+
+        // To replace addTexture
+        template<typename M>
+        void useTexture(M&& material) { mMaterial = std::forward(material); }
+
     private:
     
         PolyVox::PagedVolume<PolyVox::MaterialDensityPair88> * volumes;
@@ -93,7 +99,8 @@ namespace XK {
         
         /// Textures
         int nTextures = 0;
-        std::vector<Texture> textures;
+        std::vector<oldTexture> textures;
+        Material mMaterial;
         
         // Disable Copying and Assignment
         Voxel(Voxel const &) = delete;

@@ -56,12 +56,15 @@ namespace XK {
         glUniformMatrix4fv(Umodel, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
         // Process added textures
-        for (Texture & texture : textures) {
+        for (oldTexture & texture : textures) {
             GLuint textureLocation = glGetUniformLocation(nShader, texture.location.c_str());
             glUniform1i(textureLocation, texture.unit);
             glActiveTexture(GL_TEXTURE0 + texture.unit);
             glBindTexture(GL_TEXTURE_2D, texture.buffer);
         }
+
+        // Process material
+        mMaterial.upload(*mShader);
 
         // Pass skybox for reflection
         glActiveTexture(GL_TEXTURE31);
@@ -103,7 +106,7 @@ namespace XK {
         // Define Some Local Variables
         GLenum format;
         // texture
-        Texture texture;
+        oldTexture texture;
         texture.location = texLocation;
         texture.unit = nTextures++;
         std::string mode;

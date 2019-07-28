@@ -56,7 +56,8 @@ include_directories(Forge/Headers/
                     Forge/Vendor/sol2/single/
                     Forge/Vendor/luajit/src/
                     Forge/Vendor/kangaru/include/
-                    Forge/Vendor/voxels/include/)
+                    Forge/Vendor/voxels/include/
+                    Forge/Vendor/rapidjson/include/)
 
 file(GLOB VENDORS_SOURCES Forge/Vendor/glad/src/glad.c
                           Forge/Vendor/fastnoise/FastNoise.cpp)

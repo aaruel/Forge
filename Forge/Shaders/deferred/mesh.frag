@@ -26,8 +26,6 @@ uniform sampler2D normals;
 uniform sampler2D ambient;
 uniform sampler2D emissive;
 uniform samplerCube cubemap;
-uniform samplerCube radiance;
-uniform samplerCube irradiance;
 uniform vec3 camPos;
 
 uniform mat4 view;
@@ -71,9 +69,7 @@ void main() {
     );
     gEmissive = texture(emissive, TexCoords);
     // diffuse IBL term
-    mat3 tnrm = transpose(NormalMatrix);
-    gDiffuseEnv = texture(irradiance, gNormal).xyz;
+    gDiffuseEnv = vec3(1.0);
     // specular IBL term
-    vec3 refl = reflect(normalize(-(camPos - gPosition)), gNormal);
-    gSpecularEnv = textureLod(cubemap, refl, roughness * 5).xyz;
+    gSpecularEnv = vec3(1.0);
 }

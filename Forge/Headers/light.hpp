@@ -19,6 +19,7 @@
 #include "camera.hpp"
 #include "input.hpp"
 #include "renderable.hpp"
+#include "skybox.hpp"
 
 namespace XK {
     class Light {
@@ -83,6 +84,9 @@ namespace XK {
     private:
         float power = 0.5;
         Camera * camera;
+    public:
+        Skybox mRadiance = Skybox("field/specular/", "hdr", 11);
+        Skybox mIrradiance = Skybox("field/diffuse/", "hdr");
     };
     
     class EmissiveLight : public Light {

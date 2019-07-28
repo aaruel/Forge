@@ -1,0 +1,20 @@
+{
+    "Lights": {
+        "Base": "lighting/base.vert",
+        "ShadowVert": "special/shadow.vert",
+        "ShadowFrag": "special/shadow.frag",
+        "DirectionalLight": "lighting/directionallight.frag",
+        "SpotLight": "lighting/spotlight.frag",
+        "AmbientLight": "lighting/ambientlight.frag",
+        "EmissiveLight": "lighting/emissivelight.frag",
+        "PointLight": "lighting/pbr.frag"
+    },
+    "Voxel": {
+        "Vert": "deferred/voxel.vert",
+        "Frag": "deferred/voxel.frag"
+    },
+    "Mesh": {
+        "Vert": "deferred/mesh.vert",
+        "Frag": "deferred/mesh.frag"
+    }
+}

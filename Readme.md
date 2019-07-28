@@ -10,7 +10,7 @@
 
 *Quite the graphical improvement from above!*
 
-![PBRIBL](https://media.giphy.com/media/S44UHcHAzyNJLlWtav/giphy.gif)
+![PBRIBL](https://media.giphy.com/media/U6dqJ6bZFPao3CXADG/giphy.gif)
 
 ## Dependencies
  - Boilerplate provided by the wonderful [Glitter](https://github.com/Polytonic/Glitter) project
