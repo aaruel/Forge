@@ -13,6 +13,7 @@
 #include "shader.hpp"
 #include "octree.hpp"
 #include "utils.hpp"
+#include "xk.hpp"
 
 #include <Voxels.h>
 #include <unordered_map>
@@ -233,13 +234,13 @@ namespace XK {
         }
 
     public:
-        Voxelscape() : mOct(Octree<vRenderParams>()) {
+        Voxelscape(XKState& xk) : mOct(Octree<vRenderParams>()) {
             if (InitializeVoxels(VOXELS_VERSION, nullptr, nullptr) != Voxels::IE_Ok) {
                 throw;
             }
             // rendering parameters
             shader.attach("deferred/voxel.vert").attach("deferred/voxel.frag").link();
-            setCamera(Camera::getInstance());
+            setCamera(xk.mainCamera.get());
             setShader(&shader);
             // Construct the voxel grid
             unsigned gridSize = 64;

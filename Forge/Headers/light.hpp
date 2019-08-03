@@ -10,8 +10,8 @@
 // albedo, etc. among all the renderable meshes. These classes exploits the
 // benefits of deferred shading.
 
-#ifndef light_h
-#define light_h
+#ifndef light_hpp
+#define light_hpp
 
 #include <glm/glm.hpp>
 #include <kangaru/kangaru.hpp>
@@ -64,9 +64,9 @@ namespace XK {
     
     class DirectionalLight : public Light {
     public:
-        DirectionalLight() : Light("directionallight") {
+        DirectionalLight(Camera* _camera) : Light("directionallight") {
             setPower(2.0f);
-            camera = Camera::getInstance();
+            camera = _camera;
         }
         virtual void bind();
         void setDirection(glm::vec3 d) { direction = d; }
@@ -78,7 +78,7 @@ namespace XK {
     
     class PointLight : public Light {
     public:
-        PointLight() : Light("pbr"), camera(Camera::getInstance()) {}
+        PointLight(Camera* _camera) : Light("pbr"), camera(_camera) {}
         virtual void bind();
     
     private:

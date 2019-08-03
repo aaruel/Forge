@@ -10,37 +10,30 @@
 #include <map>
 #include <vector>
 
-// Global variables because callback typing!
-Input::MousePos mousepos;
-Input::MouseBut mousebut;
-// Switches input contexts to GUI layer
-bool mouseCapture = true;
-// Key registry
-bool newPos = false;
-std::map<
-    int,
-    std::vector<std::function<void()>>
-> keyEmitter;
+// static initialization
+Input::MousePos Input::mousepos;
+Input::MouseBut Input::mousebut;
+bool Input::mouseCapture = true;
+bool Input::newPos = false;
+std::map<int, std::vector<std::function<void()>>> Input::keyEmitter;
 
-Input * Input::instance = 0;
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+void Input::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     if (!mouseCapture) return;
     // prevent mouse jumping
     if(mousepos.firstMouse) {
-        mousepos.offsX = 0.0f;
-        mousepos.offsY = 0.0f;
+        mousepos.offsX = 0.0;
+        mousepos.offsY = 0.0;
         mousepos.firstMouse = false;
     }
     else {
         mousepos.offsX = xpos;
         mousepos.offsY = -ypos;
     }
-    glfwSetCursorPos(window, 0.0f, 0.0f);
+    glfwSetCursorPos(window, 0.0, 0.0);
     newPos = true;
 }
 
-void mouse_button_callback(GLFWwindow*, int button, int action, int) {
+void Input::mouse_button_callback(GLFWwindow*, int button, int action, int) {
     if (!mouseCapture) return;
     if (action == GLFW_PRESS) {
         switch (button) {
@@ -56,7 +49,7 @@ void mouse_button_callback(GLFWwindow*, int button, int action, int) {
     }
 }
 
-void key_callback(GLFWwindow *, int key, int, int action, int) {
+void Input::key_callback(GLFWwindow *, int key, int, int action, int) {
     if (action != GLFW_PRESS) return;
     if (!mouseCapture) return;
     // Executed any hooked event callbacks
@@ -65,13 +58,6 @@ void key_callback(GLFWwindow *, int key, int, int action, int) {
             function();
         }
     }
-}
-
-Input * Input::getInstance() {
-    if (instance == 0) {
-        instance = new Input(GlobalSingleton::getInstance()->getWindow());
-    }
-    return instance;
 }
 
 Input::Input(GLFWwindow* _window) : window(_window) {
@@ -103,7 +89,7 @@ void Input::toggleMouseCapture() {
     }
     else {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwSetCursorPos(window, 0.0f, 0.0f);
+        glfwSetCursorPos(window, 0.0, 0.0);
     }
 }
 

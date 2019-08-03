@@ -4,8 +4,6 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gColor;
 uniform sampler2D gSpecular;
-uniform sampler2D gDiffuseEnv;
-uniform sampler2D gSpecularEnv;
 uniform sampler2D iblbrdf;
 uniform samplerCube radiance;
 uniform samplerCube irradiance;

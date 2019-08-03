@@ -9,12 +9,14 @@
         "EmissiveLight": "lighting/emissivelight.frag",
         "PointLight": "lighting/pbr.frag"
     },
-    "Voxel": {
-        "Vert": "deferred/voxel.vert",
-        "Frag": "deferred/voxel.frag"
-    },
-    "Mesh": {
-        "Vert": "deferred/mesh.vert",
-        "Frag": "deferred/mesh.frag"
+    "Shaders": {
+        "Voxel": {
+            "Vert": "deferred/voxel.vert",
+            "Frag": "deferred/voxel.frag"
+        },
+        "Mesh": {
+            "Vert": "deferred/mesh.vert",
+            "Frag": "deferred/mesh.frag"
+        }
     }
 }

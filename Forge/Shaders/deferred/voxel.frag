@@ -5,8 +5,6 @@ layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gColor;
 layout (location = 3) out vec4 gSpecular;
 layout (location = 4) out vec4 gEmissive;
-layout (location = 5) out vec3 gDiffuseEnv;
-layout (location = 6) out vec3 gSpecularEnv;
 
 in vec2 TexCoords;
 in vec3 FragPos;
@@ -71,6 +69,4 @@ void main() {
         /*ambientocc: */ texture(ambient, texCoords).a
     );
     gEmissive = vec4(0.0);
-    gDiffuseEnv = vec3(1.0);
-    gSpecularEnv = vec3(1.0);
 }

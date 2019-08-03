@@ -29,7 +29,7 @@ namespace XK {
         void runLighting(Light * light);
 
     public:
-        GBuffer(kgr::container * container, GLFWwindow * window);
+        GBuffer(GLFWwindow * window);
         GBuffer& attach(Light * light);
         Shader * getShader();
         void engage();
@@ -39,7 +39,7 @@ namespace XK {
 
     public:
         // Constants
-        static constexpr size_t N_ATTACHMENTS = 7;
+        static constexpr size_t N_ATTACHMENTS = 5;
 
     private:
         // Frame shaders
@@ -60,8 +60,6 @@ namespace XK {
         GLuint gColor;
         GLuint gSpecular;
         GLuint gEmissive;
-        GLuint gDiffuseEnv;
-        GLuint gSpecularEnv;
         GLuint gDepth;
         GLuint attachments[N_ATTACHMENTS] = {
             GL_COLOR_ATTACHMENT0,
@@ -69,8 +67,6 @@ namespace XK {
             GL_COLOR_ATTACHMENT2,
             GL_COLOR_ATTACHMENT3,
             GL_COLOR_ATTACHMENT4,
-            GL_COLOR_ATTACHMENT5,
-            GL_COLOR_ATTACHMENT6
         };
         
         // Rendering frame

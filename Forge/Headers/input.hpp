@@ -10,9 +10,17 @@
 
 #include <GLFW/glfw3.h>
 #include <functional>
+#include <map>
 
 class Input {
+private:
+    static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+    static void mouse_button_callback(GLFWwindow*, int button, int action, int);
+    static void key_callback(GLFWwindow*, int key, int, int action, int);
+
 public:
+    Input(GLFWwindow* _window);
+
     struct MousePos {
         double prevX;
         double prevY;
@@ -41,14 +49,17 @@ public:
     bool isLeftClick();
     bool isRightClick();
     
-    static Input * getInstance();
-    
 private:
-    Input(GLFWwindow* _window);
-
     GLFWwindow * window;
-    
-    static Input * instance;
+    // Static variables because callback typing!
+    static Input::MousePos mousepos;
+    static Input::MouseBut mousebut;
+    // Switches input contexts to GUI layer
+    static bool mouseCapture;
+    // Key registry
+    static bool newPos;
+    static std::map<int, std::vector<std::function<void()>>> keyEmitter;
+
 };
 
 #endif /* input_h */

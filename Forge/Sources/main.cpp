@@ -13,6 +13,7 @@
 #include "voxelscape.hpp"
 #include "ubomanager.hpp"
 #include "shadermanager.hpp"
+#include "xk.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -27,6 +28,11 @@
 using namespace XK;
 
 int main() {
+    XKState graphics = XKState::Init("Forge", 1024, 768);
+    return 0;
+}
+
+int x__main() {
     // Load GLFW and Create a Window
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -60,7 +66,7 @@ int main() {
     //Voxelscape<VoxelPlane> vs;
     
     // Instantiate camera
-    Camera * camera = Camera::getInstance();
+    //Camera * camera = Camera::getInstance();
     
     // Instantiate skybox
     kgr::container container;
@@ -68,16 +74,16 @@ int main() {
     Skybox& skybox = container.service<SkyboxService>();
     
     // Build gBuffer
-    GBuffer gbuffer(&container, mWindow);
+    GBuffer gbuffer(mWindow);
     AmbientLight al;
-    PointLight sl;
-    DirectionalLight dl;
+    //PointLight sl;
+    //DirectionalLight dl;
     EmissiveLight el;
-    gbuffer.attach(&al).attach(&el).attach(&sl);
-    sl.setPosition(glm::vec3(0.f, 0.4, -3.f));
+    gbuffer.attach(&al).attach(&el);
+    //sl.setPosition(glm::vec3(0.f, 0.4, -3.f));
     //sl.setDirection(glm::vec3(0.f, 0.f, 1.f));
-    dl.setDirection(glm::vec3(0.f, -1.f, 0.f));
-    dl.setPower(0.8f);
+    //dl.setDirection(glm::vec3(0.f, -1.f, 0.f));
+    //dl.setPower(0.8f);
     
     // Voxel meshing
     Voxel voxel(&container, &defVox);
@@ -94,7 +100,7 @@ int main() {
     // Console console;
     
     // GUI
-    GUI::init(mWindow);
+    //GUI::init(mWindow);
     
     Pipeline objects = {&mesh, &voxel};
     
@@ -103,14 +109,15 @@ int main() {
     glm::quat r = glm::angleAxis(glm::radians(1.f), glm::vec3(0.0, 1.0, 0.0));
     mesh.rotate(q);
     bool slFollowCam = true;
-    Input::getInstance()->registerKeyEvent(GLFW_KEY_9, [&slFollowCam](){slFollowCam = !slFollowCam;});
+    //Input::getInstance()->registerKeyEvent(GLFW_KEY_9, [&slFollowCam](){slFollowCam = !slFollowCam;});
 
     UBOManager<UBO::Float, UBO::Vector, UBO::Matrix> x("");
     
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
-        if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(mWindow, true);
+        }
 
         // Background Fill Color
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -120,9 +127,9 @@ int main() {
         //mesh.rotate(r);
 
         // Step camera
-        camera->update();
+        //camera->update();
         if (slFollowCam) {
-            sl.setPosition(camera->getPosition());
+            //sl.setPosition(camera->getPosition());
             //sl.setDirection(camera->getEye());
         }
         
@@ -130,7 +137,7 @@ int main() {
         gbuffer.engage();
         
             // Draw skybox first so the actual map doesn't clip
-            sl.mRadiance.draw();
+            //sl.mRadiance.draw();
             Renderable::renderAll(&objects);
         
         gbuffer.disengage();
@@ -148,6 +155,6 @@ int main() {
         glfwPollEvents();
         mover += 0.01;
     }   glfwTerminate();
-    XK::GUI::destroy();
+    GUI::destroy();
     return EXIT_SUCCESS;
 }

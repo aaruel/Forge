@@ -9,17 +9,6 @@
 #include "glitter.hpp"
 #include <iostream>
 
-// Static
-
-Camera * Camera::instance = 0;
-
-Camera * Camera::getInstance() {
-    if (instance == 0) {
-        instance = new Camera(Input::getInstance());
-    }
-    return instance;
-}
-
 // Public
 
 Camera::Camera(Input * _input) : input(_input) {}

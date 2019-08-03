@@ -20,7 +20,7 @@ namespace XK {
 
     Voxel::Voxel(kgr::container * container, Shader * shader) {
         mShader = shader;
-        mCamera = Camera::getInstance();
+        //mCamera = Camera::getInstance();
         mContainer = container;
         mSkybox = &mContainer->service<SkyboxService>();
         auto * pager = new FastNoisePager<MaterialDensityPair88>();
@@ -81,14 +81,14 @@ namespace XK {
         // POST RENDERING //
         
         // Try to raycast for block updates
-        Input * input = Input::getInstance();
-        if (input->isLeftClick()) {
+        //Input * input = Input::getInstance();
+        if (0/*input->isLeftClick()*/) {
             Vector3DInt32 newVox;
             if (!getVoxelFromEye(newVox)) return;
             addVoxel(newVox);
         }
         
-        if (input->isRightClick()) {
+        if (0/*input->isRightClick()*/) {
             Vector3DInt32 newVox;
             if (!getVoxelFromEye(newVox, false)) return;
             deleteVoxel(newVox);

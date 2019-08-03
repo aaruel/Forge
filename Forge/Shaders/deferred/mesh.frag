@@ -5,8 +5,6 @@ layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gColor;
 layout (location = 3) out vec4 gSpecular;
 layout (location = 4) out vec4 gEmissive;
-layout (location = 5) out vec3 gDiffuseEnv;
-layout (location = 6) out vec3 gSpecularEnv;
 
 in vec2 TexCoords;
 in vec3 FragPos;
@@ -68,8 +66,4 @@ void main() {
         texture(ambient, TexCoords).a
     );
     gEmissive = texture(emissive, TexCoords);
-    // diffuse IBL term
-    gDiffuseEnv = vec3(1.0);
-    // specular IBL term
-    gSpecularEnv = vec3(1.0);
 }

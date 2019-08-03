@@ -16,7 +16,7 @@ namespace XK
         // Dependecy inject the camera and shader
         mContainer = container;
         mShader = shader;
-        mCamera = Camera::getInstance();
+        //mCamera = Camera::getInstance();
         mSkybox = &mContainer->service<SkyboxService>();
         // Load a Model from File
         Assimp::Importer loader;

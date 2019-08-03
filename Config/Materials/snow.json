@@ -1,0 +1,7 @@
+{
+    "diffuse": "snow/snow-base.png",
+    "normal": "snow/snow-normal.png",
+    "height": "snow/snow-height.png",
+    "specular": "snow/snow-roughness.png",
+    "ambientOcclusion": "snow/snow-ao.png"
+}

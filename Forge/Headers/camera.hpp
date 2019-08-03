@@ -45,8 +45,6 @@ public:
         update();
     }
     
-    static Camera * getInstance();
-    
 private:
     // Camera flags
     bool controllable = true;

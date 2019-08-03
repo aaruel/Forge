@@ -52,11 +52,11 @@ kgr::container container;
 // Variable sized lua console
 Console<> &console = container.service<ConsoleService<>>();
 
-void XK::GUI::init(GLFWwindow * window) {
-    inputInst = Input::getInstance();
-    _window = window;
+void XK::GUI::init(XKState& xk) {
+    inputInst = xk.input.get();
+    _window = xk.window;
     _ctx = nk_glfw3_init(
-        window,
+        _window,
         NK_GLFW3_INSTALL_CALLBACKS
     );
     nk_glfw3_font_stash_begin(&atlas);

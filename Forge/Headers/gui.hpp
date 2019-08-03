@@ -9,9 +9,10 @@
 #define gui_h
 
 #include <GLFW/glfw3.h>
+#include "xk.hpp"
 
 namespace XK { namespace GUI {
-    void init(GLFWwindow *);
+    void init(XKState&);
     void render();
     void destroy();
 } }

@@ -1,0 +1,5 @@
+{
+    "MeshesConfig": "meshes.json",
+    "ShadersConfig": "shaders.json",
+    "VoxelConfig": "voxel.json"
+}

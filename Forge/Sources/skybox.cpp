@@ -116,7 +116,7 @@ namespace XK {
     }
 
     Skybox::Skybox(std::string const & filename, std::string const & ext, unsigned levels) :
-        camera(Camera::getInstance()),
+        camera(/*Camera::getInstance()*/),
         mipLevels(levels)
     {
         loadVerts();
